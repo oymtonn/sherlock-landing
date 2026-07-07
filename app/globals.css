@@ -121,9 +121,11 @@ a {
 }
 
 .brand-mark {
-  width: 26px;
+  width: 31px;
   height: 26px;
   flex: none;
+  object-fit: contain;
+  display: block;
 }
 
 .nav-links {
@@ -389,6 +391,8 @@ h3 {
   position: absolute;
   top: 0;
   left: 0;
+  width: max-content;
+  height: max-content;
   z-index: 3;
   will-change: transform;
   pointer-events: none;
@@ -445,8 +449,8 @@ h3 {
   .hunt {
     padding: 28px 30px;
   }
-  .hunt-avatar svg {
-    width: 54px;
+  .hunt-avatar img {
+    width: 59px;
     height: 54px;
   }
 }
@@ -523,102 +527,6 @@ h3 {
   transform: rotateX(var(--tiltx)) rotateY(var(--tilty));
   transition: transform 0.25s ease-out;
   transform-style: preserve-3d;
-}
-
-/* ---- the escaped bug ---- */
-
-.straybug {
-  position: fixed;
-  bottom: 18px;
-  left: -40px;
-  z-index: 60;
-  background: none;
-  border: none;
-  padding: 6px;
-  cursor: pointer;
-  animation: bug-scuttle 11s linear forwards;
-}
-
-.straybug svg {
-  animation: bug-wiggle 0.35s linear infinite;
-}
-
-.straybug.frozen,
-.straybug.squashed {
-  animation-play-state: paused;
-}
-
-.straybug.frozen svg {
-  animation-duration: 0.15s; /* panic wiggle — it senses the shadow above */
-}
-
-/* Sherlock diving in to squash the bug under the lens */
-.stray-hunter {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 62;
-  pointer-events: none;
-  transition: transform 0.7s cubic-bezier(0.45, 0, 0.9, 0.6);
-  filter: drop-shadow(0 10px 24px rgba(124, 58, 237, 0.4));
-}
-
-.stray-hunter.exit {
-  transition: transform 0.8s cubic-bezier(0.2, 0.6, 0.4, 1);
-}
-
-.stray-hunter.dive svg {
-  animation: hunter-thud 0.7s ease-out;
-}
-
-@keyframes hunter-thud {
-  0%, 88% { transform: none; }
-  92% { transform: translateY(3px) scale(1.03, 0.95); }
-  100% { transform: none; }
-}
-
-.straybug.squashed svg {
-  animation: bug-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes bug-scuttle {
-  0% { left: -40px; }
-  18% { left: 22vw; }
-  24% { left: 21vw; } /* doubles back — suspicious behavior */
-  55% { left: 58vw; }
-  62% { left: 56vw; }
-  100% { left: 104vw; }
-}
-
-@keyframes bug-wiggle {
-  0%, 100% { transform: rotate(84deg) translateY(0); }
-  50% { transform: rotate(96deg) translateY(-1.5px); }
-}
-
-.straybug-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translate(-50%, 16px);
-  z-index: 61;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--bg-panel);
-  border: 1px solid rgba(62, 207, 142, 0.4);
-  border-radius: 10px;
-  padding: 10px 16px;
-  font-size: 12.5px;
-  color: var(--ink-dim);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-}
-
-.straybug-toast.show {
-  opacity: 1;
-  transform: translate(-50%, 0);
 }
 
 /* ------------------------------------------------------------------ panels */
@@ -1967,9 +1875,7 @@ h3 {
   .hero h1 em,
   .hunt-bug,
   .graph-edge.hot,
-  .btn:hover::after,
-  .straybug,
-  .straybug svg {
+  .btn:hover::after {
     animation: none;
   }
   .spotlight > .wrap {

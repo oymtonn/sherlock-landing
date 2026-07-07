@@ -116,6 +116,8 @@ export default function HeroHunt({ children }) {
 // clockwise. The avatar leans into the direction of travel.
 function placeAvatar(box, av, t) {
   const r = box.getBoundingClientRect();
+  const avatarWidth = av.offsetWidth || 86;
+  const avatarHeight = av.offsetHeight || 78;
   const cx = r.width / 2;
   const cy = r.height / 2;
   // keep the whole orbit inside the hunt box so the avatar never
@@ -128,5 +130,5 @@ function placeAvatar(box, av, t) {
   // tangent direction → subtle lean, plus a gentle bob
   const lean = Math.cos(a) * 10;
   const bob = Math.sin(performance.now() / 420) * 3;
-  av.style.transform = `translate(${x - 39}px, ${y - 39 + bob}px) rotate(${lean}deg)`;
+  av.style.transform = `translate(${x - avatarWidth / 2}px, ${y - avatarHeight / 2 + bob}px) rotate(${lean}deg)`;
 }

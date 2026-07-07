@@ -1,6 +1,7 @@
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import StrayBug from "@/components/StrayBug";
 import "./globals.css";
 
 const grotesk = Space_Grotesk({
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
           <Nav />
           <main>{children}</main>
           <Footer />
+          <StrayBug />
         </div>
       </body>
     </html>

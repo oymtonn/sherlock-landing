@@ -1,45 +1,46 @@
 import Link from "next/link";
-import { RepoGraph } from "@/components/CaseAnimation";
-import HeroVisual from "@/components/HeroVisual";
+import CaseAnimation, { RepoGraph } from "@/components/CaseAnimation";
+import HeroHunt from "@/components/HeroHunt";
+import InteractiveGraph from "@/components/InteractiveGraph";
 import Reveal from "@/components/Reveal";
+import Spotlight from "@/components/Spotlight";
 
 export default function Home() {
   return (
     <>
-      {/* ---------------------------------------------------- 1 · hero */}
-      <section className="hero">
-        <div className="wrap hero-grid">
-          <div>
-            <span className="kicker">GitHub App · autonomous bug fixing</span>
+      {/* ---------------------------------------------------- 1 · hero (centered, avatar on the hunt) */}
+      <Spotlight className="hero hero-center">
+        <div className="wrap">
+          <span className="kicker">GitHub App · autonomous bug fixing</span>
+          <HeroHunt>
             <h1>
-              GitHub bugs to <em>verified</em> pull requests
+              GitHub bugs to <em>verified</em>
+              <br />
+              pull requests
             </h1>
-            <p className="hero-sub">
-              Sherlock reproduces issues, maps your repo, patches the bug,
-              verifies the fix, and opens a PR your team can review.
-            </p>
-            <div className="hero-ctas">
-              <Link href="/contact" className="btn btn-primary btn-lg">
-                Book a demo
-              </Link>
-              <Link href="/docs" className="btn btn-ghost btn-lg">
-                See how it works
-              </Link>
-            </div>
-            <div className="hero-meta">
-              <span>
-                <i /> triggered by <b>/sherlock investigate</b>
-              </span>
-              <span>
-                <i /> PR-only — never pushes to main
-              </span>
-            </div>
+          </HeroHunt>
+          <p className="hero-sub">
+            Sherlock reproduces issues, maps your repo, patches the bug,
+            verifies the fix, and opens a PR your team can review.
+          </p>
+          <div className="hero-ctas">
+            <Link href="/contact" className="btn btn-primary btn-lg">
+              Book a demo
+            </Link>
+            <Link href="/docs" className="btn btn-ghost btn-lg">
+              See how it works
+            </Link>
           </div>
-
-          {/* 2 · product animation / visual proof */}
-          <HeroVisual />
+          <div className="hero-meta">
+            <span>
+              <i /> triggered by <b>/sherlock investigate</b>
+            </span>
+            <span>
+              <i /> PR-only — never pushes to main
+            </span>
+          </div>
         </div>
-      </section>
+      </Spotlight>
 
       {/* ---------------------------------------------------- 3 · how it works */}
       <section className="section" id="how">
@@ -101,6 +102,23 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------------------------------------------------- 3b · follow a live case */}
+      <section className="section" id="case">
+        <div className="wrap">
+          <Reveal className="section-head">
+            <span className="kicker">Case replay</span>
+            <h2>Follow investigation SLK-4127, stage by stage</h2>
+            <p>
+              The exact sequence Sherlock runs on every bug. Click any stage
+              in the rail to scrub — hover to pause.
+            </p>
+          </Reveal>
+          <Reveal>
+            <CaseAnimation />
+          </Reveal>
+        </div>
+      </section>
+
       {/* ---------------------------------------------------- 4 · graphify */}
       <section className="section" id="graphify">
         <div className="wrap">
@@ -128,14 +146,8 @@ export default function Home() {
                 </li>
               </ul>
             </div>
-            <div className="panel" style={{ padding: "26px 18px" }}>
-              <RepoGraph />
-              <div
-                className="mono dim"
-                style={{ fontSize: 12, textAlign: "center", marginTop: 6 }}
-              >
-                issue #482 → 6 relevant nodes → 1 patched function
-              </div>
+            <div className="panel" style={{ padding: "26px 18px 14px" }}>
+              <InteractiveGraph />
             </div>
           </Reveal>
         </div>

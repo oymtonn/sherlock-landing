@@ -14,8 +14,7 @@ npm run build      # static export to ./out (deploy anywhere)
 
 - `app/` — Next.js App Router pages: home, product, security, pricing, docs, contact
 - `components/CaseAnimation.jsx` — the hero motion: issue → investigate → map → reproduce → patch → verify → PR, built in code (crisp panels, loops, click-to-scrub, respects reduced motion)
-- `app/globals.css` — design tokens. Amber = brand, green = **verified states only**, red = diffs/failures
-- `HIGGSFIELD.md` — prompt spec for generating an optional video version of the hero motion
+- `app/globals.css` — design tokens. Violet = brand, yellow = investigating, green = **verified states only**, red = bugs/diffs
 
 ## Notes
 

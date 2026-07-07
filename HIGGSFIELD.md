@@ -1,12 +1,23 @@
-# Higgsfield motion asset — prompt spec
+# Higgsfield motion asset
+
+**Status: generated** — job `3eec4e7c-cb31-4000-8b17-c6870345e26c` (kling3_0_turbo, 10s, 1280×720).
+Download the mp4 from the generation result and save it as `public/hero-motion.mp4`.
+`components/HeroVisual.jsx` picks it up automatically; until the file exists it
+falls back to the coded `CaseAnimation`.
+
+Direct URL (may expire):
+https://d8j0ntlcm91z4.cloudfront.net/user_3G9oO2X3a9hWkhqsHFc7HfbU6su/hf_20260707_062538_3eec4e7c-cb31-4000-8b17-c6870345e26c.mp4
+
+## Prompt spec (for regenerating)
 
 Optional 6–10s video alternative to the coded hero animation
 (`components/CaseAnimation.jsx`). Generate at 16:9, target ~8s.
 
 ## Prompt
 
-> Premium B2B developer-tool product motion, dark neutral interface background
-> (#0b0e14), crisp flat UI panels, restrained smooth camera. Sequence:
+> Premium B2B developer-tool product motion, near-black deep purple interface
+> background (#0a0712), crisp flat UI panels with thin violet borders, subtle
+> digital glitch transitions, restrained smooth camera. Sequence:
 > (1) a realistic GitHub-style issue card slides in: "Bug: Completed tasks
 > still show in Active filter"; (2) a small status panel activates:
 > "Investigation started"; (3) a code repository graph lights up amber —
@@ -17,9 +28,9 @@ Optional 6–10s video alternative to the coded hero animation
 > added lines; (6) a badge morphs from amber "Reproduced" to green
 > "Verified"; (7) final frame: a GitHub-style pull-request card, "Fix active
 > task cache invalidation", green Verified badge. Typography: clean grotesque
-> + monospace. Accent colors: amber #e5a83c, green #3ecf8e only on verified
-> states, red #f0605d only on the bug/diff. Trustworthy, precise, editorial
-> motion design.
+> + monospace. Accent colors: violet #a78bfa (brand), yellow #f5c84c only for
+> in-progress status, green #3ecf8e only on verified states, red #f0605d only
+> on the bug/diff. Trustworthy, precise, editorial motion design.
 
 ## Negative prompt
 

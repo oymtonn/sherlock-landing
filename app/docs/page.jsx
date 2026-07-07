@@ -41,7 +41,7 @@ export default function Docs() {
           <div className="term">
             <div><span className="t-faint">1.</span> Install the GitHub App → select repositories</div>
             <div><span className="t-faint">2.</span> Open any bug issue</div>
-            <div><span className="t-faint">3.</span> Comment <span className="t-amber">/sherlock investigate</span></div>
+            <div><span className="t-faint">3.</span> Comment <span className="t-warn">/sherlock investigate</span></div>
             <div><span className="t-faint">4.</span> Review the PR when it arrives</div>
           </div>
           <div className="docs-note">
@@ -70,11 +70,11 @@ export default function Docs() {
           <h2 id="pipeline">The pipeline</h2>
           <p>Every investigation moves through five stages:</p>
           <div className="term">
-            <div><span className="t-amber">reproduce</span> <span className="t-faint">—</span> boot the app in a sandbox, drive a real browser, record a replayable script that demonstrates the failure</div>
-            <div><span className="t-amber">map</span> <span className="t-faint">—</span> query the Graphify repo graph for files, functions, and relationships reachable from the failure</div>
-            <div><span className="t-amber">patch</span> <span className="t-faint">—</span> draft a minimal change against the mapped code paths</div>
-            <div><span className="t-amber">verify</span> <span className="t-faint">—</span> rebuild with the patch and replay the saved reproduction in a fresh sandbox</div>
-            <div><span className="t-amber">deliver</span> <span className="t-faint">—</span> open a PR with the diff and all artifacts attached</div>
+            <div><span className="t-warn">reproduce</span> <span className="t-faint">—</span> boot the app in a sandbox, drive a real browser, record a replayable script that demonstrates the failure</div>
+            <div><span className="t-warn">map</span> <span className="t-faint">—</span> query the Graphify repo graph for files, functions, and relationships reachable from the failure</div>
+            <div><span className="t-warn">patch</span> <span className="t-faint">—</span> draft a minimal change against the mapped code paths</div>
+            <div><span className="t-warn">verify</span> <span className="t-faint">—</span> rebuild with the patch and replay the saved reproduction in a fresh sandbox</div>
+            <div><span className="t-warn">deliver</span> <span className="t-faint">—</span> open a PR with the diff and all artifacts attached</div>
           </div>
           <p>
             The stages are strictly ordered: a patch is never drafted before a
@@ -111,7 +111,7 @@ export default function Docs() {
           <p>An investigation ends in one of three states, all reported on the issue:</p>
           <div className="term">
             <div><span className="t-green">verified pr</span> <span className="t-faint">—</span> the replay passed against the patched build; PR carries the Verified badge</div>
-            <div><span className="t-amber">draft pr</span> <span className="t-faint">—</span> a plausible patch exists but verification didn&apos;t pass; shipped as a draft, clearly labeled</div>
+            <div><span className="t-warn">draft pr</span> <span className="t-faint">—</span> a plausible patch exists but verification didn&apos;t pass; shipped as a draft, clearly labeled</div>
             <div><span className="t-red">no reproduction</span> <span className="t-faint">—</span> the bug couldn&apos;t be reproduced; you get the attempt log and what was tried</div>
           </div>
           <p>
@@ -126,7 +126,7 @@ export default function Docs() {
             through the GitHub App installation — uninstalling revokes
             everything instantly. For self-hosted workers, quotas, network
             policy, and image allowlists are under your control. See{" "}
-            <Link href="/security" style={{ color: "var(--amber)" }}>
+            <Link href="/security" style={{ color: "var(--brand)" }}>
               Security
             </Link>{" "}
             for the full model.

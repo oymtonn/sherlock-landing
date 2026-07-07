@@ -1,24 +1,27 @@
 /* ------------------------------------------------------------------
-   Sherlock — design tokens
-   Concept: "evidence, not vibes." Dark case-file surface, one warm
-   brand accent (case amber), green reserved exclusively for verified
-   states, red only for diffs/failures.
+   Sherlock — design tokens v2
+   Black / deep-purple canvas. Violet is the brand voice. Status colors
+   are strictly semantic: yellow = investigating, green = verified only,
+   red = bugs & removed code. Motion language: glitch-in, settle, hold.
 ------------------------------------------------------------------- */
 
 :root {
-  --bg: #0b0e14;
-  --bg-raise: #10141d;
-  --bg-panel: #131826;
-  --bg-inset: #0d1119;
-  --line: #222a3a;
-  --line-soft: #1a2130;
+  --bg: #08060d;
+  --bg-raise: #0d0a16;
+  --bg-panel: #110d1d;
+  --bg-inset: #0a0813;
+  --line: #2a2144;
+  --line-soft: #1b1530;
 
-  --ink: #e9ecf1;
-  --ink-dim: #9aa4b5;
-  --ink-faint: #5f6a7d;
+  --ink: #edeaf6;
+  --ink-dim: #a79fc4;
+  --ink-faint: #665d87;
 
-  --amber: #e5a83c;
-  --amber-soft: rgba(229, 168, 60, 0.12);
+  --brand: #a78bfa;
+  --brand-strong: #7c3aed;
+  --brand-soft: rgba(167, 139, 250, 0.12);
+  --warn: #f5c84c;
+  --warn-soft: rgba(245, 200, 76, 0.1);
   --verified: #3ecf8e;
   --verified-soft: rgba(62, 207, 142, 0.12);
   --diff-red: #f0605d;
@@ -26,11 +29,6 @@
   --diff-green: #3ecf8e;
   --diff-green-soft: rgba(62, 207, 142, 0.08);
   --blue: #6ea8fe;
-
-  --paper: #f4f1ea;
-  --paper-ink: #1b1f27;
-  --paper-dim: #565e6e;
-  --paper-line: #ddd7c9;
 
   --font-body: var(--font-grotesk), -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
@@ -67,17 +65,21 @@ a {
 }
 
 ::selection {
-  background: var(--amber);
-  color: #14100a;
+  background: var(--brand-strong);
+  color: #fff;
 }
 
-/* faint dot grid over the whole dark canvas */
+/* blueprint grid over the whole canvas + violet bloom up top */
 .site {
-  background-image: radial-gradient(
-    rgba(233, 236, 241, 0.035) 1px,
-    transparent 1px
-  );
-  background-size: 28px 28px;
+  background-image:
+    radial-gradient(
+      ellipse 70% 40% at 50% -8%,
+      rgba(124, 58, 237, 0.16),
+      transparent
+    ),
+    linear-gradient(rgba(167, 139, 250, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 139, 250, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 56px 56px, 56px 56px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -97,7 +99,7 @@ a {
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--line-soft);
-  background: rgba(11, 14, 20, 0.82);
+  background: rgba(8, 6, 13, 0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -127,12 +129,13 @@ a {
 .nav-links {
   display: flex;
   gap: 26px;
-  font-size: 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
   color: var(--ink-dim);
 }
 
 .nav-links a:hover {
-  color: var(--ink);
+  color: var(--brand);
 }
 
 .nav-links a.active {
@@ -201,19 +204,21 @@ a {
   letter-spacing: 0.01em;
   border: 1px solid transparent;
   cursor: pointer;
+  position: relative;
   transition: transform 0.15s ease, box-shadow 0.15s ease,
     background 0.15s ease, border-color 0.15s ease;
   font-family: var(--font-body);
 }
 
 .btn-primary {
-  background: var(--amber);
-  color: #14100a;
+  background: var(--brand-strong);
+  color: #fff;
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(229, 168, 60, 0.25);
+  box-shadow: 0 6px 28px rgba(124, 58, 237, 0.45);
+  background: #8b4dff;
 }
 
 .btn-ghost {
@@ -223,8 +228,8 @@ a {
 }
 
 .btn-ghost:hover {
-  border-color: var(--ink-faint);
-  background: var(--bg-raise);
+  border-color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .btn-lg {
@@ -240,18 +245,16 @@ a {
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--brand);
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .kicker::before {
-  content: "";
-  width: 22px;
-  height: 1px;
-  background: var(--amber);
-  opacity: 0.6;
+  content: "//";
+  color: var(--ink-faint);
+  letter-spacing: 0;
 }
 
 h1,
@@ -294,6 +297,7 @@ h3 {
 
 .hero {
   padding: 96px 0 72px;
+  position: relative;
 }
 
 .hero-grid {
@@ -304,26 +308,43 @@ h3 {
 }
 
 .hero h1 {
-  font-size: clamp(38px, 5.2vw, 58px);
+  font-size: clamp(38px, 5.2vw, 60px);
   margin: 20px 0 20px;
 }
 
+/* the tilted, glitching keyword — the one loud moment on the page */
 .hero h1 em {
   font-style: normal;
-  color: var(--verified);
-  position: relative;
-  white-space: nowrap;
+  color: var(--brand);
+  display: inline-block;
+  transform: rotate(-3deg) translateY(2px);
+  padding: 0 6px;
+  background: var(--brand-soft);
+  border-radius: 6px;
+  animation: word-glitch 7s infinite;
 }
 
-.hero h1 em::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4px;
-  height: 7px;
-  background: var(--verified-soft);
-  z-index: -1;
+@keyframes word-glitch {
+  0%, 91%, 100% {
+    text-shadow: none;
+    transform: rotate(-3deg) translateY(2px);
+  }
+  92% {
+    text-shadow: 3px 0 var(--diff-red), -3px 0 var(--blue);
+    transform: rotate(-3deg) translate(2px, 1px) skewX(6deg);
+  }
+  94% {
+    text-shadow: -3px 0 var(--verified), 3px 0 var(--brand-strong);
+    transform: rotate(-2.5deg) translate(-2px, 2px);
+  }
+  96% {
+    text-shadow: 2px 0 var(--diff-red), -2px 0 var(--blue);
+    transform: rotate(-3deg) translateY(1px) skewX(-4deg);
+  }
+  98% {
+    text-shadow: none;
+    transform: rotate(-3deg) translateY(2px);
+  }
 }
 
 .hero-sub {
@@ -359,7 +380,7 @@ h3 {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--amber);
+  background: var(--brand);
   display: inline-block;
 }
 
@@ -369,6 +390,14 @@ h3 {
   }
 }
 
+/* hero video (Higgsfield asset) */
+
+.hero-video {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* ------------------------------------------------------------------ panels */
 
 .panel {
@@ -376,7 +405,8 @@ h3 {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.08),
+    0 24px 60px rgba(0, 0, 0, 0.55), 0 0 80px rgba(124, 58, 237, 0.08);
 }
 
 .panel-bar {
@@ -414,10 +444,16 @@ h3 {
   white-space: nowrap;
 }
 
-.chip-amber {
-  border-color: rgba(229, 168, 60, 0.4);
-  color: var(--amber);
-  background: var(--amber-soft);
+.chip-brand {
+  border-color: rgba(167, 139, 250, 0.45);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.chip-warn {
+  border-color: rgba(245, 200, 76, 0.4);
+  color: var(--warn);
+  background: var(--warn-soft);
 }
 
 .chip-verified {
@@ -432,7 +468,7 @@ h3 {
   background: var(--diff-red-soft);
 }
 
-/* ------------------------------------------------------------------ case animation (hero) */
+/* ------------------------------------------------------------------ case animation (hero fallback + product pages) */
 
 .case {
   display: grid;
@@ -472,12 +508,12 @@ h3 {
 
 .case-step.active {
   color: var(--ink);
-  border-left-color: var(--amber);
-  background: rgba(229, 168, 60, 0.06);
+  border-left-color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .case-step.active .dot {
-  background: var(--amber);
+  background: var(--brand);
 }
 
 .case-step.done {
@@ -498,8 +534,6 @@ h3 {
   position: absolute;
   inset: 22px;
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.45s ease, transform 0.45s ease;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -508,8 +542,34 @@ h3 {
 
 .case-scene.on {
   opacity: 1;
-  transform: translateY(0);
   pointer-events: auto;
+  animation: scene-glitch 0.45s steps(1, end) both;
+}
+
+/* scenes cut in with a two-frame glitch, then hold */
+@keyframes scene-glitch {
+  0% {
+    opacity: 1;
+    clip-path: inset(35% 0 40% 0);
+    transform: translateX(-7px) skewX(3deg);
+    filter: drop-shadow(2px 0 rgba(240, 96, 93, 0.7))
+      drop-shadow(-2px 0 rgba(110, 168, 254, 0.7));
+  }
+  33% {
+    clip-path: inset(5% 0 55% 0);
+    transform: translateX(5px);
+  }
+  66% {
+    clip-path: inset(55% 0 0 0);
+    transform: translateX(-3px) skewX(-2deg);
+    filter: drop-shadow(-1px 0 rgba(167, 139, 250, 0.7))
+      drop-shadow(1px 0 rgba(62, 207, 142, 0.7));
+  }
+  100% {
+    clip-path: none;
+    transform: none;
+    filter: none;
+  }
 }
 
 .case-progress {
@@ -517,7 +577,7 @@ h3 {
   left: 0;
   bottom: 0;
   height: 2px;
-  background: var(--amber);
+  background: var(--brand);
   transition: width 0.2s linear;
 }
 
@@ -539,7 +599,7 @@ h3 {
     white-space: nowrap;
   }
   .case-step.active {
-    border-bottom-color: var(--amber);
+    border-bottom-color: var(--brand);
   }
   .case-stage {
     min-height: 340px;
@@ -594,8 +654,8 @@ h3 {
   color: var(--ink-dim);
 }
 
-.term .t-amber {
-  color: var(--amber);
+.term .t-warn {
+  color: var(--warn);
 }
 
 .term .t-green {
@@ -608,6 +668,10 @@ h3 {
 
 .term .t-blue {
   color: var(--blue);
+}
+
+.term .t-brand {
+  color: var(--brand);
 }
 
 .term .t-faint {
@@ -716,8 +780,8 @@ h3 {
 }
 
 .graph-node.lit {
-  stroke: var(--amber);
-  fill: rgba(229, 168, 60, 0.08);
+  stroke: var(--brand);
+  fill: rgba(167, 139, 250, 0.1);
 }
 
 .graph-label {
@@ -727,7 +791,7 @@ h3 {
 }
 
 .graph-label.lit {
-  fill: var(--amber);
+  fill: var(--brand);
 }
 
 .graph-edge {
@@ -736,8 +800,8 @@ h3 {
 }
 
 .graph-edge.lit {
-  stroke: var(--amber);
-  stroke-opacity: 0.7;
+  stroke: var(--brand);
+  stroke-opacity: 0.75;
   stroke-width: 1.4;
 }
 
@@ -757,16 +821,18 @@ h3 {
   background: var(--bg-raise);
   padding: 26px 22px 30px;
   position: relative;
+  transition: background 0.2s;
 }
 
 .step:hover {
   background: var(--bg-panel);
+  box-shadow: inset 0 2px 0 var(--brand);
 }
 
 .step-num {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--amber);
+  color: var(--brand);
   margin-bottom: 14px;
 }
 
@@ -833,7 +899,7 @@ h3 {
 
 .feature-list li::before {
   content: "→";
-  color: var(--amber);
+  color: var(--brand);
   flex: none;
   font-family: var(--font-mono);
 }
@@ -893,26 +959,28 @@ h3 {
   }
 }
 
-/* ------------------------------------------------------------------ security (paper section) */
+/* ------------------------------------------------------------------ security — dark violet vault section */
 
 .paper-section {
-  background: var(--paper);
-  color: var(--paper-ink);
+  position: relative;
+  background: linear-gradient(
+      180deg,
+      rgba(124, 58, 237, 0.09),
+      rgba(124, 58, 237, 0.02) 30%,
+      transparent
+    ),
+    var(--bg-raise);
+  color: var(--ink);
   padding: 104px 0;
-  background-image: radial-gradient(rgba(27, 31, 39, 0.05) 1px, transparent 1px);
+  border-top: 1px solid rgba(167, 139, 250, 0.25);
+  border-bottom: 1px solid var(--line-soft);
+  background-image: linear-gradient(rgba(167, 139, 250, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 139, 250, 0.06) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 
-.paper-section .kicker {
-  color: #a06e14;
-}
-
-.paper-section .kicker::before {
-  background: #a06e14;
-}
-
 .paper-section .section-head p {
-  color: var(--paper-dim);
+  color: var(--ink-dim);
 }
 
 .sec-grid {
@@ -922,10 +990,16 @@ h3 {
 }
 
 .sec-card {
-  border: 1px solid var(--paper-line);
+  border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 28px;
-  background: #fbf9f4;
+  background: var(--bg-panel);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.sec-card:hover {
+  border-color: rgba(167, 139, 250, 0.45);
+  transform: translateY(-2px);
 }
 
 .sec-card h3 {
@@ -938,15 +1012,15 @@ h3 {
 
 .sec-card p {
   font-size: 14.5px;
-  color: var(--paper-dim);
+  color: var(--ink-dim);
 }
 
 .sec-card .sec-ico {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: rgba(160, 110, 20, 0.1);
-  color: #a06e14;
+  background: var(--brand-soft);
+  color: var(--brand);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -990,6 +1064,12 @@ h3 {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ev-panel:hover {
+  border-color: rgba(167, 139, 250, 0.4);
+  box-shadow: 0 0 40px rgba(124, 58, 237, 0.12);
 }
 
 .ev-panel .panel-bar {
@@ -1073,9 +1153,10 @@ h3 {
 }
 
 .price-card.hot {
-  border-color: rgba(229, 168, 60, 0.5);
-  background: linear-gradient(180deg, rgba(229, 168, 60, 0.06), transparent 40%),
+  border-color: rgba(167, 139, 250, 0.55);
+  background: linear-gradient(180deg, rgba(124, 58, 237, 0.12), transparent 40%),
     var(--bg-raise);
+  box-shadow: 0 0 60px rgba(124, 58, 237, 0.15);
   position: relative;
 }
 
@@ -1088,7 +1169,7 @@ h3 {
 }
 
 .price-card.hot .p-name {
-  color: var(--amber);
+  color: var(--brand);
 }
 
 .price-card .p-price {
@@ -1127,7 +1208,7 @@ h3 {
 
 .price-card ul li::before {
   content: "·";
-  color: var(--amber);
+  color: var(--brand);
   font-weight: 700;
 }
 
@@ -1149,8 +1230,8 @@ h3 {
   text-align: center;
   border-top: 1px solid var(--line-soft);
   background: radial-gradient(
-    ellipse 60% 70% at 50% 110%,
-    rgba(229, 168, 60, 0.1),
+    ellipse 60% 70% at 50% 115%,
+    rgba(124, 58, 237, 0.22),
     transparent
   );
 }
@@ -1206,7 +1287,7 @@ h3 {
 }
 
 .footer-col a:hover {
-  color: var(--ink);
+  color: var(--brand);
 }
 
 .footer-base {
@@ -1255,7 +1336,8 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 13.5px;
+  font-family: var(--font-mono);
+  font-size: 13px;
 }
 
 .docs-nav a {
@@ -1265,8 +1347,8 @@ h3 {
 }
 
 .docs-nav a:hover {
-  color: var(--ink);
-  border-left-color: var(--amber);
+  color: var(--brand);
+  border-left-color: var(--brand);
 }
 
 .docs-body {
@@ -1302,12 +1384,12 @@ h3 {
   border: 1px solid var(--line-soft);
   padding: 1.5px 6px;
   border-radius: 5px;
-  color: var(--ink);
+  color: var(--brand);
 }
 
 .docs-note {
-  border: 1px solid rgba(229, 168, 60, 0.35);
-  background: var(--amber-soft);
+  border: 1px solid rgba(245, 200, 76, 0.35);
+  background: var(--warn-soft);
   border-radius: var(--radius);
   padding: 14px 18px;
   font-size: 14px;
@@ -1316,7 +1398,7 @@ h3 {
 }
 
 .docs-note b {
-  color: var(--amber);
+  color: var(--warn);
 }
 
 @media (max-width: 860px) {
@@ -1380,7 +1462,8 @@ h3 {
 .field textarea:focus,
 .field select:focus {
   outline: none;
-  border-color: var(--amber);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
 .form-ok {
@@ -1398,7 +1481,7 @@ h3 {
   }
 }
 
-/* table (pricing compare / product) */
+/* table (security permissions / product) */
 
 .tbl {
   width: 100%;
@@ -1435,26 +1518,55 @@ h3 {
   font-weight: 500;
 }
 
-/* reveal on scroll */
+/* ------------------------------------------------------------------ glitch reveal on scroll */
 
 .reveal {
   opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
 }
 
 .reveal.in {
-  opacity: 1;
-  transform: none;
+  animation: glitch-in 0.55s steps(1, end) both;
+}
+
+@keyframes glitch-in {
+  0% {
+    opacity: 1;
+    clip-path: inset(40% 0 45% 0);
+    transform: translate(-10px, 8px) skewX(4deg);
+    filter: drop-shadow(3px 0 rgba(240, 96, 93, 0.65))
+      drop-shadow(-3px 0 rgba(110, 168, 254, 0.65));
+  }
+  25% {
+    clip-path: inset(8% 0 60% 0);
+    transform: translate(7px, -4px);
+    filter: drop-shadow(-2px 0 rgba(167, 139, 250, 0.7))
+      drop-shadow(2px 0 rgba(62, 207, 142, 0.55));
+  }
+  50% {
+    clip-path: inset(60% 0 4% 0);
+    transform: translate(-5px, 2px) skewX(-3deg);
+  }
+  75% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(2px, 0);
+    filter: drop-shadow(1px 0 rgba(240, 96, 93, 0.4))
+      drop-shadow(-1px 0 rgba(110, 168, 254, 0.4));
+  }
+  100% {
+    opacity: 1;
+    clip-path: none;
+    transform: none;
+    filter: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .reveal,
-  .case-scene {
-    transition: none;
+  .reveal.in,
+  .case-scene.on,
+  .hero h1 em {
+    animation: none;
   }
   .reveal {
     opacity: 1;
-    transform: none;
   }
 }

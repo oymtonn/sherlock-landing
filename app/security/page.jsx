@@ -101,17 +101,17 @@ export default function Security() {
               <tbody>
                 <tr>
                   <td>Read repository contents</td>
-                  <td><span className="chip chip-amber">read</span></td>
+                  <td><span className="chip chip-brand">read</span></td>
                   <td>Clone into the sandbox for reproduction and patching</td>
                 </tr>
                 <tr>
                   <td>Read &amp; comment on issues</td>
-                  <td><span className="chip chip-amber">read / write</span></td>
+                  <td><span className="chip chip-brand">read / write</span></td>
                   <td>Receive the trigger command, post status updates</td>
                 </tr>
                 <tr>
                   <td>Create branches &amp; pull requests</td>
-                  <td><span className="chip chip-amber">write</span></td>
+                  <td><span className="chip chip-brand">write</span></td>
                   <td>Deliver the fix for human review</td>
                 </tr>
                 <tr>

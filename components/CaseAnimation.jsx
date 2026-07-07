@@ -60,7 +60,7 @@ export default function CaseAnimation() {
           <i /> <i /> <i />
         </div>
         <span>sherlock · investigation SLK-4127</span>
-        <span style={{ marginLeft: "auto" }} className="chip chip-amber">
+        <span style={{ marginLeft: "auto" }} className="chip chip-warn">
           live
         </span>
       </div>
@@ -111,7 +111,7 @@ export default function CaseAnimation() {
             </div>
             <div className="term" style={{ marginTop: 12 }}>
               <span className="t-blue">dana-oh</span> commented:{" "}
-              <span className="t-amber">/sherlock investigate</span>
+              <span className="t-warn">/sherlock investigate</span>
             </div>
           </Scene>
 
@@ -120,7 +120,7 @@ export default function CaseAnimation() {
             <div className="term">
               <div>
                 <span className="t-faint">[00:00.4]</span>{" "}
-                <span className="t-amber">sherlock</span> investigation queued
+                <span className="t-warn">sherlock</span> investigation queued
                 · SLK-4127
               </div>
               <div>
@@ -137,7 +137,7 @@ export default function CaseAnimation() {
               </div>
               <div>
                 <span className="t-faint">[00:05.0]</span>{" "}
-                <span className="t-amber">▸ investigation started</span>
+                <span className="t-warn">▸ investigation started</span>
               </div>
             </div>
           </Scene>
@@ -179,7 +179,7 @@ export default function CaseAnimation() {
             <div className="term" style={{ marginTop: 12 }}>
               <span className="t-faint">playwright ·</span> assertion{" "}
               <span className="t-red">failed as expected</span> — bug{" "}
-              <span className="t-amber">reproduced</span> · trace saved
+              <span className="t-warn">reproduced</span> · trace saved
             </div>
           </Scene>
 
@@ -225,7 +225,7 @@ export default function CaseAnimation() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
-              <span className="chip">reproduced</span>
+              <span className="chip chip-warn">reproduced</span>
               <span className="mono t-faint" style={{ color: "var(--ink-faint)" }}>
                 →
               </span>

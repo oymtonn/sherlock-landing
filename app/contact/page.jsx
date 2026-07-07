@@ -48,7 +48,7 @@ export default function Contact() {
           </div>
           <p className="dim" style={{ marginTop: 24, fontSize: 14.5 }}>
             Prefer email? Reach us at{" "}
-            <a href="mailto:team@sherlock.dev" style={{ color: "var(--amber)" }}>
+            <a href="mailto:team@sherlock.dev" style={{ color: "var(--brand)" }}>
               team@sherlock.dev
             </a>
             . Security questionnaires and DPA requests welcome.

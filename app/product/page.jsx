@@ -31,7 +31,7 @@ export default function Product() {
               <h2>One comment starts the case</h2>
               <p>
                 Sherlock lives where your bugs live. A maintainer comments{" "}
-                <code className="mono" style={{ color: "var(--amber)" }}>
+                <code className="mono" style={{ color: "var(--brand)" }}>
                   /sherlock investigate
                 </code>{" "}
                 on any GitHub issue, and the investigation is queued.
@@ -62,13 +62,13 @@ export default function Product() {
                     <span className="chip">dana-oh</span>
                     <span>commented 12s ago</span>
                   </div>
-                  <div className="gh-body mono" style={{ color: "var(--amber)" }}>
+                  <div className="gh-body mono" style={{ color: "var(--brand)" }}>
                     /sherlock investigate
                   </div>
                 </div>
                 <div className="gh-card" style={{ marginTop: 12 }}>
                   <div className="gh-card-head">
-                    <span className="chip chip-amber">sherlock[bot]</span>
+                    <span className="chip chip-brand">sherlock[bot]</span>
                     <span>commented just now</span>
                   </div>
                   <div className="gh-body">
@@ -112,7 +112,7 @@ export default function Product() {
               <div className="term" style={{ marginTop: 14 }}>
                 <span className="t-faint">playwright ·</span> reproduction
                 saved as replayable script ·{" "}
-                <span className="t-amber">trace.zip attached</span>
+                <span className="t-warn">trace.zip attached</span>
               </div>
             </div>
             <div>

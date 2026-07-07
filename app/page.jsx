@@ -1,5 +1,6 @@
 import Link from "next/link";
-import CaseAnimation, { RepoGraph } from "@/components/CaseAnimation";
+import { RepoGraph } from "@/components/CaseAnimation";
+import HeroVisual from "@/components/HeroVisual";
 import Reveal from "@/components/Reveal";
 
 export default function Home() {
@@ -36,7 +37,7 @@ export default function Home() {
           </div>
 
           {/* 2 · product animation / visual proof */}
-          <CaseAnimation />
+          <HeroVisual />
         </div>
       </section>
 
@@ -279,10 +280,10 @@ export default function Home() {
                 </div>
                 <div className="ev-body term" style={{ border: "none" }}>
                   <div><span className="t-faint">[00:00.4]</span> queued · issue #482 · repo acme/taskboard</div>
-                  <div><span className="t-faint">[00:01.1]</span> trigger: <span className="t-amber">/sherlock investigate</span> by dana-oh (write) ✓</div>
+                  <div><span className="t-faint">[00:01.1]</span> trigger: <span className="t-warn">/sherlock investigate</span> by dana-oh (write) ✓</div>
                   <div><span className="t-faint">[00:02.8]</span> sandbox up · main@e4f21c9 · app healthy on :3000</div>
                   <div><span className="t-faint">[00:19.5]</span> reproduction recorded · 3 steps · <span className="t-red">bug present</span></div>
-                  <div><span className="t-faint">[00:24.0]</span> graphify: 2,314 nodes → <span className="t-amber">6 relevant</span></div>
+                  <div><span className="t-faint">[00:24.0]</span> graphify: 2,314 nodes → <span className="t-warn">6 relevant</span></div>
                   <div><span className="t-faint">[02:47.3]</span> patch drafted · server.js · +2 −1</div>
                   <div><span className="t-faint">[04:20.7]</span> replay vs patch: 3/3 steps <span className="t-green">passed</span></div>
                   <div><span className="t-faint">[04:31.2]</span> PR #483 opened · <span className="t-green">Verified</span></div>
@@ -321,7 +322,7 @@ export default function Home() {
               <div className="ev-panel ev-c">
                 <div className="panel-bar">
                   <span>graph-context.json</span>
-                  <span className="chip chip-amber">6 nodes</span>
+                  <span className="chip chip-brand">6 nodes</span>
                 </div>
                 <div className="ev-body">
                   <RepoGraph />

@@ -13,12 +13,14 @@ const BUG_T = [0.13, 0.5, 0.82];
 const LAP_MS = 14000;
 const DWELL_MS = 900;
 const RESET_HOLD_MS = 1600;
+const RESET_STAGGER_MS = 420;
 
 export default function HeroHunt({ children }) {
   const boxRef = useRef(null);
   const avatarRef = useRef(null);
   const [caught, setCaught] = useState([false, false, false]);
   const [reduced, setReduced] = useState(false);
+  const [avatarReady, setAvatarReady] = useState(false);
   const caughtRef = useRef(caught);
   caughtRef.current = caught;
 
@@ -26,14 +28,23 @@ export default function HeroHunt({ children }) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setReduced(true);
       setCaught([true, true, true]);
+      setAvatarReady(true);
       return;
+    }
+
+    const initialBox = boxRef.current;
+    const initialAvatar = avatarRef.current;
+    if (initialBox && initialAvatar) {
+      placeAvatar(initialBox, initialAvatar, 0);
+      setAvatarReady(true);
     }
 
     let raf;
     let t = 0; // orbit progress 0..1
     let last = performance.now();
     let dwellUntil = 0; // timestamp while paused at a bug
-    let resetAt = 0;
+    let resetUntil = 0;
+    const resetTimers = [];
     let nextBug = 0;
 
     const step = (now) => {
@@ -46,14 +57,12 @@ export default function HeroHunt({ children }) {
       if (!box || !av) return;
 
       // resetting between laps
-      if (resetAt) {
-        if (now >= resetAt) {
-          setCaught([false, false, false]);
-          nextBug = 0;
-          resetAt = 0;
-        } else {
-          return placeAvatar(box, av, t);
-        }
+      if (resetUntil && now < resetUntil) {
+        return placeAvatar(box, av, t);
+      }
+      if (resetUntil) {
+        resetUntil = 0;
+        nextBug = 0;
       }
 
       // dwelling at a bug
@@ -75,7 +84,20 @@ export default function HeroHunt({ children }) {
       // lap complete → hold at the start, then reset the case
       if (t >= 1) {
         t = 0;
-        resetAt = now + RESET_HOLD_MS;
+        resetUntil =
+          now + RESET_HOLD_MS + RESET_STAGGER_MS * (BUG_T.length - 1) + 50;
+
+        BUG_T.forEach((_, bugIndex) => {
+          const timer = window.setTimeout(() => {
+            setCaught((current) =>
+              current.map((value, index) =>
+                index === bugIndex ? false : value
+              )
+            );
+          }, RESET_HOLD_MS + RESET_STAGGER_MS * bugIndex);
+          resetTimers.push(timer);
+        });
+
         nextBug = 0;
       }
 
@@ -83,7 +105,10 @@ export default function HeroHunt({ children }) {
     };
 
     raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      resetTimers.forEach(window.clearTimeout);
+    };
   }, []);
 
   const catchBug = (i) =>
@@ -105,7 +130,10 @@ export default function HeroHunt({ children }) {
         </button>
       ))}
 
-      <div className="hunt-avatar" ref={avatarRef}>
+      <div
+        className={`hunt-avatar ${avatarReady ? "hunt-avatar-ready" : ""}`}
+        ref={avatarRef}
+      >
         <SherlockAvatar size={78} className="hunt-avatar-svg" />
       </div>
     </div>

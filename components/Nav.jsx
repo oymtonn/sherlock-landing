@@ -23,22 +23,23 @@ export default function Nav() {
     <header className="nav">
       <div className="wrap nav-inner">
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
-          <Logo />
           Sherlock
         </Link>
-        <nav className="nav-links">
+        <div className="nav-cta">
+          <nav className="nav-links">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className={isActive(l.href)}>
               {l.label}
             </Link>
           ))}
         </nav>
-        <div className="nav-cta">
-          <Link href="/docs" className="btn btn-ghost">
-            How it works
+          <span className="border-l h-8 inline-block"></span>
+
+          <Link href="/" className="btn btn-ghost">
+            Log In
           </Link>
-          <Link href="/contact" className="btn btn-primary">
-            Book a demo
+          <Link href="/" className="btn btn-primary">
+            Get Started
           </Link>
         </div>
         <button

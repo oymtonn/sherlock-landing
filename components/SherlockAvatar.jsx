@@ -6,7 +6,7 @@ export default function SherlockAvatar({ size = 72, className = "" }) {
       className={className}
       width={width}
       height={size}
-      src="/sher-logo-v2.png"
+      src="/icon.png"
       alt=""
       aria-hidden="true"
     />

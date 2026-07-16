@@ -3,15 +3,15 @@ import Logo from "./Logo";
 
 export default function Footer() {
   return (
-    <footer className="footer">
+    <footer className="border-t border-[color:var(--line-soft)] pt-14 pb-10 mt-auto text-[14px] text-[color:var(--ink-faint)]">
       <div className="wrap">
-        <div className="footer-grid">
-          <div className="footer-col" style={{ maxWidth: 260 }}>
+        <div className="flex justify-between gap-10 flex-wrap">
+          <div className="footer-col max-w-[260px]">
             <span className="brand">
               <Logo />
               Sherlock
             </span>
-            <span style={{ marginTop: 8 }}>
+            <span className="mt-2">
               GitHub bugs to verified pull requests.
             </span>
           </div>
@@ -34,7 +34,7 @@ export default function Footer() {
             <Link href="/contact">Book a demo</Link>
           </div>
         </div>
-        <div className="footer-base">
+        <div className="mono mt-11 pt-5 border-t border-[color:var(--line-soft)] flex justify-between gap-4 flex-wrap text-[12px]">
           <span>© {new Date().getFullYear()} Sherlock</span>
           <span>evidence &gt; vibes</span>
         </div>

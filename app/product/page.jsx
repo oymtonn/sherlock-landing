@@ -31,7 +31,7 @@ export default function Product() {
               <h2>One comment starts the case</h2>
               <p>
                 Sherlock lives where your bugs live. A maintainer comments{" "}
-                <code className="mono" style={{ color: "var(--brand)" }}>
+                <code className="mono text-[color:var(--brand)]">
                   /sherlock investigate
                 </code>{" "}
                 on any GitHub issue, and the investigation is queued.
@@ -56,17 +56,17 @@ export default function Product() {
                 <div className="panel-dots"><i /><i /><i /></div>
                 <span>acme/taskboard · issue #482</span>
               </div>
-              <div style={{ padding: 20 }}>
+              <div className="p-5">
                 <div className="gh-card">
                   <div className="gh-card-head">
                     <span className="chip">dana-oh</span>
                     <span>commented 12s ago</span>
                   </div>
-                  <div className="gh-body mono" style={{ color: "var(--brand)" }}>
+                  <div className="gh-body mono text-[color:var(--brand)]">
                     /sherlock investigate
                   </div>
                 </div>
-                <div className="gh-card" style={{ marginTop: 12 }}>
+                <div className="gh-card mt-3">
                   <div className="gh-card-head">
                     <span className="chip chip-brand">sherlock[bot]</span>
                     <span>commented just now</span>
@@ -87,29 +87,29 @@ export default function Product() {
       <section className="section">
         <div className="wrap">
           <Reveal className="feature-row flip">
-            <div className="panel" style={{ padding: 20 }}>
+            <div className="panel p-5">
               <div className="replay">
                 <div className="replay-frame">
-                  <div className="rf-bar" style={{ width: "58%" }} />
+                  <div className="rf-bar w-[58%]" />
                   <div className="rf-row" />
                   <div className="rf-row" />
                   <div className="rf-row" />
                   <div className="rf-cap">1 · load board</div>
                 </div>
                 <div className="replay-frame">
-                  <div className="rf-bar" style={{ width: "45%" }} />
+                  <div className="rf-bar w-[45%]" />
                   <div className="rf-row ok" />
                   <div className="rf-row" />
                   <div className="rf-cap">2 · mark task done</div>
                 </div>
                 <div className="replay-frame">
-                  <div className="rf-bar" style={{ width: "45%" }} />
+                  <div className="rf-bar w-[45%]" />
                   <div className="rf-row hl" />
                   <div className="rf-row" />
                   <div className="rf-cap">3 · bug confirmed</div>
                 </div>
               </div>
-              <div className="term" style={{ marginTop: 14 }}>
+              <div className="term mt-3.5">
                 <span className="t-faint">playwright ·</span> reproduction
                 saved as replayable script ·{" "}
                 <span className="t-warn">trace.zip attached</span>
@@ -159,9 +159,9 @@ export default function Product() {
                 <li>Shipped with the PR so reviewers see the reasoning surface.</li>
               </ul>
             </div>
-            <div className="panel" style={{ padding: "26px 18px" }}>
+            <div className="panel p-[26px_18px]">
               <RepoGraph />
-              <div className="mono dim" style={{ fontSize: 12, textAlign: "center", marginTop: 6 }}>
+              <div className="mono dim text-[12px] text-center mt-1.5">
                 2,314 nodes indexed · 6 in scope for #482
               </div>
             </div>
@@ -200,7 +200,7 @@ export default function Product() {
               </p>
               <p>
                 PRs that pass carry the{" "}
-                <span style={{ color: "var(--verified)" }}>Verified</span>{" "}
+                <span className="text-[color:var(--verified)]">Verified</span>{" "}
                 badge. PRs that don&apos;t pass don&apos;t carry it — and
                 Sherlock says so on the issue.
               </p>
@@ -225,7 +225,7 @@ export default function Product() {
             <div className="ev-panel">
               <div className="pr-card">
                 <div className="pr-ico">⎇</div>
-                <div style={{ flex: 1 }}>
+                <div className="flex-1">
                   <div className="pr-title">Fix active task cache invalidation</div>
                   <div className="pr-meta">
                     #483 · sherlock[bot] · 1 commit · +2 −1 · closes #482
@@ -236,13 +236,13 @@ export default function Product() {
                     <span><i>✓</i> awaiting human review — Sherlock never merges</span>
                   </div>
                 </div>
-                <span className="chip chip-verified" style={{ alignSelf: "center" }}>
+                <span className="chip chip-verified self-center">
                   Verified
                 </span>
               </div>
             </div>
           </Reveal>
-          <div style={{ marginTop: 48, display: "flex", gap: 14, flexWrap: "wrap" }}>
+          <div className="mt-12 flex gap-3.5 flex-wrap">
             <Link href="/contact" className="btn btn-primary btn-lg">Book a demo</Link>
             <Link href="/docs" className="btn btn-ghost btn-lg">Read the docs</Link>
           </div>

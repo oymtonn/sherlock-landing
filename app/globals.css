@@ -1,3 +1,11 @@
+@import "tailwindcss";
+
+/* All hand-authored styles live in the `components` layer so that Tailwind
+   utilities (which sit in the later `utilities` layer) reliably win when we
+   add them in the markup, while these rules still override Tailwind's base
+   preflight — exactly as the previously unlayered stylesheet did. */
+@layer components {
+
 /* ------------------------------------------------------------------
    Sherlock — design tokens v2
    Black / deep-purple canvas. Violet is the brand voice. Status colors
@@ -85,6 +93,28 @@ a {
   flex-direction: column;
 }
 
+/* Spotlight lives on the page background rather than inside the hero. The
+   fixed attachment makes its coordinates viewport-relative, so the glow
+   keeps following the pointer as the page scrolls. */
+.spotlight-on .site {
+  background-image:
+    radial-gradient(
+      340px circle at var(--spotlight-x, 50vw) var(--spotlight-y, 40vh),
+      rgba(167, 139, 250, 0.1),
+      rgba(167, 139, 250, 0.035) 45%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 40% at 50% -8%,
+      rgba(124, 58, 237, 0.16),
+      transparent
+    ),
+    linear-gradient(rgba(167, 139, 250, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 139, 250, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 56px 56px, 56px 56px;
+  background-attachment: fixed, scroll, scroll, scroll;
+}
+
 .wrap {
   width: 100%;
   max-width: var(--max);
@@ -93,16 +123,6 @@ a {
 }
 
 /* ------------------------------------------------------------------ nav */
-
-.nav {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  border-bottom: 1px solid var(--line-soft);
-  background: rgba(8, 6, 13, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
 
 .nav-inner {
   display: flex;
@@ -267,6 +287,7 @@ h3 {
   font-weight: 700;
 }
 
+/* Standard vertical section rhythm — reused on every page. */
 .section {
   padding: 104px 0;
   border-top: 1px solid var(--line-soft);
@@ -300,13 +321,6 @@ h3 {
 .hero {
   padding: 96px 0 72px;
   position: relative;
-}
-
-.hero-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  gap: 56px;
-  align-items: center;
 }
 
 .hero h1 {
@@ -360,13 +374,7 @@ h3 {
   display: none;
 }
 
-.hero-center .hero-sub {
-  margin: 0 auto 32px;
-  max-width: 520px;
-}
-
-.hero-center .hero-ctas,
-.hero-center .hero-meta {
+.hero-center .hero-ctas {
   justify-content: center;
 }
 
@@ -455,72 +463,19 @@ h3 {
   }
 }
 
-.hero-sub {
-  color: var(--ink-dim);
-  font-size: 18px;
-  max-width: 460px;
-  margin-bottom: 32px;
-}
-
 .hero-ctas {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
 }
 
-.hero-meta {
-  margin-top: 36px;
-  display: flex;
-  gap: 22px;
-  flex-wrap: wrap;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--ink-faint);
-}
-
-.hero-meta span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.hero-meta i {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--brand);
-  display: inline-block;
-}
-
-@media (max-width: 960px) {
-  .hero-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* ---- hero spotlight: the cursor is the flashlight ---- */
 
 .spotlight {
-  --mx: 50%;
-  --my: 40%;
   --tiltx: 0deg;
   --tilty: 0deg;
   position: relative;
   perspective: 1200px;
-}
-
-.spotlight::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    340px circle at var(--mx) var(--my),
-    rgba(167, 139, 250, 0.1),
-    rgba(167, 139, 250, 0.035) 45%,
-    transparent 70%
-  );
-  transition: opacity 0.3s;
 }
 
 .spotlight > .wrap {
@@ -1105,6 +1060,22 @@ h3 {
   background-size: 28px 28px;
 }
 
+/* This section paints its own opaque background, so repeat the fixed
+   page-level spotlight above it to keep the cursor glow continuous. */
+.spotlight-on .paper-section {
+  background-image:
+    radial-gradient(
+      340px circle at var(--spotlight-x, 50vw) var(--spotlight-y, 40vh),
+      rgba(167, 139, 250, 0.1),
+      rgba(167, 139, 250, 0.035) 45%,
+      transparent 70%
+    ),
+    linear-gradient(rgba(167, 139, 250, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(167, 139, 250, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 28px 28px, 28px 28px;
+  background-attachment: fixed, scroll, scroll;
+}
+
 .paper-section .section-head p {
   color: var(--ink-dim);
 }
@@ -1385,21 +1356,9 @@ h3 {
 
 /* ------------------------------------------------------------------ footer */
 
-.footer {
-  border-top: 1px solid var(--line-soft);
-  padding: 56px 0 40px;
-  margin-top: auto;
-  font-size: 14px;
-  color: var(--ink-faint);
-}
-
-.footer-grid {
-  display: flex;
-  justify-content: space-between;
-  gap: 40px;
-  flex-wrap: wrap;
-}
-
+/* `.footer`, the footer grid, and the base bar are one-off composition —
+   built with Tailwind utilities in Footer.jsx. Only the reused column
+   pattern stays here. */
 .footer-col {
   display: flex;
   flex-direction: column;
@@ -1414,18 +1373,6 @@ h3 {
 
 .footer-col a:hover {
   color: var(--brand);
-}
-
-.footer-base {
-  margin-top: 44px;
-  padding-top: 20px;
-  border-top: 1px solid var(--line-soft);
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-family: var(--font-mono);
-  font-size: 12px;
 }
 
 /* ------------------------------------------------------------------ subpage layout */
@@ -1448,12 +1395,8 @@ h3 {
 
 /* docs */
 
-.docs-layout {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 56px;
-  padding: 40px 0 104px;
-}
+/* `.docs-layout` grid is one-off page composition — built with Tailwind
+   utilities in docs/page.jsx. */
 
 .docs-nav {
   position: sticky;
@@ -1528,9 +1471,6 @@ h3 {
 }
 
 @media (max-width: 860px) {
-  .docs-layout {
-    grid-template-columns: 1fr;
-  }
   .docs-nav {
     position: static;
     flex-direction: row;
@@ -1546,12 +1486,8 @@ h3 {
 
 /* contact */
 
-.contact-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  gap: 64px;
-  padding-bottom: 104px;
-}
+/* `.contact-grid` is one-off page composition — built with Tailwind
+   utilities in contact/page.jsx. */
 
 .contact-form {
   background: var(--bg-raise);
@@ -1601,11 +1537,6 @@ h3 {
   font-size: 14px;
 }
 
-@media (max-width: 900px) {
-  .contact-grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* table (security permissions / product) */
 
@@ -1885,3 +1816,5 @@ h3 {
     opacity: 1;
   }
 }
+
+} /* end @layer components */

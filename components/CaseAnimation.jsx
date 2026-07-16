@@ -60,7 +60,7 @@ export default function CaseAnimation() {
           <i /> <i /> <i />
         </div>
         <span>sherlock · investigation SLK-4127</span>
-        <span style={{ marginLeft: "auto" }} className="chip chip-warn">
+        <span className="chip chip-warn ml-auto">
           live
         </span>
       </div>
@@ -109,7 +109,7 @@ export default function CaseAnimation() {
                 <span className="chip">frontend</span>
               </div>
             </div>
-            <div className="term" style={{ marginTop: 12 }}>
+            <div className="term mt-3">
               <span className="t-blue">dana-oh</span> commented:{" "}
               <span className="t-warn">/sherlock investigate</span>
             </div>
@@ -146,8 +146,7 @@ export default function CaseAnimation() {
           <Scene on={stage === 2}>
             <RepoGraph />
             <div
-              className="mono dim"
-              style={{ fontSize: 12, marginTop: 10, textAlign: "center" }}
+              className="mono dim text-[12px] mt-2.5 text-center"
             >
               graphify · 6 of 2,314 nodes relevant to #482
             </div>
@@ -157,26 +156,26 @@ export default function CaseAnimation() {
           <Scene on={stage === 3}>
             <div className="replay">
               <div className="replay-frame">
-                <div className="rf-bar" style={{ width: "60%" }} />
+                <div className="rf-bar w-[60%]" />
                 <div className="rf-row" />
                 <div className="rf-row" />
                 <div className="rf-row" />
                 <div className="rf-cap">1 · mark task done</div>
               </div>
               <div className="replay-frame">
-                <div className="rf-bar" style={{ width: "45%" }} />
+                <div className="rf-bar w-[45%]" />
                 <div className="rf-row" />
                 <div className="rf-row" />
                 <div className="rf-cap">2 · switch to Active</div>
               </div>
               <div className="replay-frame">
-                <div className="rf-bar" style={{ width: "45%" }} />
+                <div className="rf-bar w-[45%]" />
                 <div className="rf-row hl" />
                 <div className="rf-row" />
                 <div className="rf-cap">3 · stale task visible</div>
               </div>
             </div>
-            <div className="term" style={{ marginTop: 12 }}>
+            <div className="term mt-3">
               <span className="t-faint">playwright ·</span> assertion{" "}
               <span className="t-red">failed as expected</span> — bug{" "}
               <span className="t-warn">reproduced</span> · trace saved
@@ -189,8 +188,8 @@ export default function CaseAnimation() {
               <div className="diff-head">
                 <span>server.js</span>
                 <span>
-                  <span style={{ color: "var(--verified)" }}>+2</span>{" "}
-                  <span style={{ color: "var(--diff-red)" }}>−1</span>
+                  <span className="text-[color:var(--verified)]">+2</span>{" "}
+                  <span className="text-[color:var(--diff-red)]">−1</span>
                 </span>
               </div>
               <pre>
@@ -224,9 +223,9 @@ export default function CaseAnimation() {
                 task absent <span className="t-green">✓</span>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <div className="flex gap-2.5 mt-3.5">
               <span className="chip chip-warn">reproduced</span>
-              <span className="mono t-faint" style={{ color: "var(--ink-faint)" }}>
+              <span className="mono t-faint text-[color:var(--ink-faint)]">
                 →
               </span>
               <span className="chip chip-verified">verified</span>
@@ -235,7 +234,7 @@ export default function CaseAnimation() {
 
           {/* 6 — PR card */}
           <Scene on={stage === 6}>
-            <div className="gh-card pr-card" style={{ padding: 18 }}>
+            <div className="gh-card pr-card p-[18px]">
               <div className="pr-ico">
                 <PrIcon />
               </div>

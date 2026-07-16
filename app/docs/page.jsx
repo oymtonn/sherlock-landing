@@ -10,7 +10,7 @@ export const metadata = {
 export default function Docs() {
   return (
     <>
-      <section className="page-hero" style={{ paddingBottom: 24 }}>
+      <section className="page-hero pb-6">
         <div className="wrap">
           <span className="kicker">Docs</span>
           <h1>How Sherlock works</h1>
@@ -21,7 +21,7 @@ export default function Docs() {
         </div>
       </section>
 
-      <div className="wrap docs-layout">
+      <div className="wrap grid grid-cols-[220px_1fr] gap-14 px-0 pt-10 pb-[104px] max-[860px]:grid-cols-1">
         <nav className="docs-nav">
           <a href="#quickstart">Quickstart</a>
           <a href="#trigger">Triggering</a>
@@ -84,24 +84,24 @@ export default function Docs() {
 
           <h2 id="artifacts">Artifacts</h2>
           <p>Every run produces an inspectable evidence set:</p>
-          <div className="ledger" style={{ margin: "20px 0 24px" }}>
-            <div className="ledger-row" style={{ gridTemplateColumns: "200px 1fr" }}>
+          <div className="ledger mt-5 mb-6">
+            <div className="ledger-row grid-cols-[200px_1fr]">
               <span className="l-key">investigation.log</span>
               <span className="l-val">timestamped record of every stage, decision, and command</span>
             </div>
-            <div className="ledger-row" style={{ gridTemplateColumns: "200px 1fr" }}>
+            <div className="ledger-row grid-cols-[200px_1fr]">
               <span className="l-key">reproduction script</span>
               <span className="l-val">the deterministic browser script that triggers the bug</span>
             </div>
-            <div className="ledger-row" style={{ gridTemplateColumns: "200px 1fr" }}>
+            <div className="ledger-row grid-cols-[200px_1fr]">
               <span className="l-key">trace.zip</span>
               <span className="l-val">browser traces from reproduction and verification runs</span>
             </div>
-            <div className="ledger-row" style={{ gridTemplateColumns: "200px 1fr" }}>
+            <div className="ledger-row grid-cols-[200px_1fr]">
               <span className="l-key">graph-context.json</span>
               <span className="l-val">the Graphify slice the investigation worked from</span>
             </div>
-            <div className="ledger-row" style={{ gridTemplateColumns: "200px 1fr" }}>
+            <div className="ledger-row grid-cols-[200px_1fr]">
               <span className="l-key">pull request</span>
               <span className="l-val">the patch, linked to the issue, with the verification result</span>
             </div>
@@ -126,13 +126,13 @@ export default function Docs() {
             through the GitHub App installation — uninstalling revokes
             everything instantly. For self-hosted workers, quotas, network
             policy, and image allowlists are under your control. See{" "}
-            <Link href="/security" style={{ color: "var(--brand)" }}>
+            <Link href="/security" className="text-[color:var(--brand)]">
               Security
             </Link>{" "}
             for the full model.
           </p>
 
-          <div style={{ marginTop: 48, display: "flex", gap: 14, flexWrap: "wrap" }}>
+          <div className="mt-12 flex gap-3.5 flex-wrap">
             <Link href="/contact" className="btn btn-primary btn-lg">Book a demo</Link>
             <Link href="/product" className="btn btn-ghost btn-lg">Product overview</Link>
           </div>

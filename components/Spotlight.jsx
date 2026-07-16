@@ -1,40 +1,57 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
-// The hero is a crime scene: your cursor is the flashlight. A soft violet
-// spotlight follows the pointer and the blueprint grid tilts a degree or
-// two toward it. Pure CSS variables — cheap, no re-renders.
+// The page is a crime scene: your cursor is the flashlight. A soft violet
+// spotlight follows the pointer across the full page, while the hero grid
+// tilts a degree or two toward it. Pure CSS variables — cheap, no re-renders.
 export default function Spotlight({ children, className = "" }) {
   const ref = useRef(null);
 
-  const onMove = (e) => {
-    const el = ref.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = ((e.clientX - r.left) / r.width) * 100;
-    const y = ((e.clientY - r.top) / r.height) * 100;
-    el.style.setProperty("--mx", `${x}%`);
-    el.style.setProperty("--my", `${y}%`);
-    el.style.setProperty("--tiltx", `${(y - 50) / -28}deg`);
-    el.style.setProperty("--tilty", `${(x - 50) / 28}deg`);
-  };
+  useEffect(() => {
+    const onMove = (e) => {
+      const el = ref.current;
+      if (!el) return;
 
-  const onLeave = () => {
-    const el = ref.current;
-    if (!el) return;
-    el.style.setProperty("--mx", "50%");
-    el.style.setProperty("--my", "40%");
-    el.style.setProperty("--tiltx", "0deg");
-    el.style.setProperty("--tilty", "0deg");
-  };
+      // These viewport coordinates drive the fixed page-background glow, so
+      // it keeps following the pointer after the hero has scrolled away.
+      const root = document.documentElement;
+      root.style.setProperty("--spotlight-x", `${e.clientX}px`);
+      root.style.setProperty("--spotlight-y", `${e.clientY}px`);
+
+      const r = el.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * 100;
+      const y = ((e.clientY - r.top) / r.height) * 100;
+      const isOverHero =
+        e.clientX >= r.left &&
+        e.clientX <= r.right &&
+        e.clientY >= r.top &&
+        e.clientY <= r.bottom;
+
+      el.style.setProperty(
+        "--tiltx",
+        isOverHero ? `${(y - 50) / -28}deg` : "0deg"
+      );
+      el.style.setProperty(
+        "--tilty",
+        isOverHero ? `${(x - 50) / 28}deg` : "0deg"
+      );
+    };
+
+    document.documentElement.classList.add("spotlight-on");
+    window.addEventListener("pointermove", onMove);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.classList.remove("spotlight-on");
+      document.documentElement.style.removeProperty("--spotlight-x");
+      document.documentElement.style.removeProperty("--spotlight-y");
+    };
+  }, []);
 
   return (
     <div
       ref={ref}
       className={`spotlight ${className}`}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
     >
       {children}
     </div>

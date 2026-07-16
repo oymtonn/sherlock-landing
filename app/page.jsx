@@ -19,7 +19,7 @@ export default function Home() {
               pull requests
             </h1>
           </HeroHunt>
-          <p className="hero-sub">
+          <p className="text-[color:var(--ink-dim)] text-[18px] max-w-[520px] mx-auto mb-8">
             Sherlock reproduces issues, maps your repo, patches the bug,
             verifies the fix, and opens a PR your team can review.
           </p>
@@ -31,12 +31,12 @@ export default function Home() {
               See how it works
             </Link>
           </div>
-          <div className="hero-meta">
-            <span>
-              <i /> triggered by <b>/sherlock investigate</b>
+          <div className="mono flex justify-center gap-[22px] flex-wrap mt-9 text-[12.5px] text-[color:var(--ink-faint)]">
+            <span className="flex items-center gap-[7px]">
+              <i className="w-[5px] h-[5px] rounded-full bg-[color:var(--brand)] inline-block" /> triggered by <b>/sherlock investigate</b>
             </span>
-            <span>
-              <i /> PR-only — never pushes to main
+            <span className="flex items-center gap-[7px]">
+              <i className="w-[5px] h-[5px] rounded-full bg-[color:var(--brand)] inline-block" /> PR-only — never pushes to main
             </span>
           </div>
         </div>
@@ -146,7 +146,7 @@ export default function Home() {
                 </li>
               </ul>
             </div>
-            <div className="panel" style={{ padding: "26px 18px 14px" }}>
+            <div className="panel p-[26px_18px_14px]">
               <InteractiveGraph />
             </div>
           </Reveal>
@@ -205,7 +205,7 @@ export default function Home() {
               </p>
               <p>
                 If the replay passes, the PR is marked{" "}
-                <span style={{ color: "var(--verified)" }}>Verified</span>. If
+                <span className="text-[color:var(--verified)]">Verified</span>. If
                 it doesn&apos;t, no PR ships with that badge. The failure mode
                 is honest.
               </p>
@@ -290,7 +290,7 @@ export default function Home() {
                   <span>investigation.log</span>
                   <span className="chip">SLK-4127</span>
                 </div>
-                <div className="ev-body term" style={{ border: "none" }}>
+                <div className="ev-body term border-0">
                   <div><span className="t-faint">[00:00.4]</span> queued · issue #482 · repo acme/taskboard</div>
                   <div><span className="t-faint">[00:01.1]</span> trigger: <span className="t-warn">/sherlock investigate</span> by dana-oh (write) ✓</div>
                   <div><span className="t-faint">[00:02.8]</span> sandbox up · main@e4f21c9 · app healthy on :3000</div>
@@ -311,19 +311,19 @@ export default function Home() {
                 <div className="ev-body">
                   <div className="replay">
                     <div className="replay-frame">
-                      <div className="rf-bar" style={{ width: "55%" }} />
+                      <div className="rf-bar w-[55%]" />
                       <div className="rf-row" />
                       <div className="rf-row" />
                       <div className="rf-cap">mark done</div>
                     </div>
                     <div className="replay-frame">
-                      <div className="rf-bar" style={{ width: "40%" }} />
+                      <div className="rf-bar w-[40%]" />
                       <div className="rf-row hl" />
                       <div className="rf-row" />
                       <div className="rf-cap">stale in Active</div>
                     </div>
                   </div>
-                  <p className="dim" style={{ fontSize: 13, marginTop: 12 }}>
+                  <p className="dim text-[13px] mt-3">
                     Recorded with a real browser before any code changed —
                     then reused, unmodified, as the verification test.
                   </p>
@@ -348,7 +348,7 @@ export default function Home() {
                   <span className="chip">server.js · +2 −1</span>
                 </div>
                 <div className="ev-body">
-                  <div className="diff" style={{ border: "none" }}>
+                  <div className="diff border-0">
                     <pre>
                       <span className="ln ctx">  app.patch(&quot;/tasks/:id&quot;, async (req, res) =&gt; {"{"}</span>
                       <span className="ln ctx">    const {"{ id }"} = req.params;</span>
@@ -366,7 +366,7 @@ export default function Home() {
               <div className="ev-panel ev-e">
                 <div className="pr-card">
                   <div className="pr-ico">⎇</div>
-                  <div style={{ flex: 1 }}>
+                  <div className="flex-1">
                     <div className="pr-title">
                       Fix active task cache invalidation
                     </div>
@@ -379,7 +379,7 @@ export default function Home() {
                       <span><i>✓</i> artifacts: investigation.log · trace.zip · graph-context.json</span>
                     </div>
                   </div>
-                  <span className="chip chip-verified" style={{ alignSelf: "center" }}>
+                  <span className="chip chip-verified self-center">
                     Verified
                   </span>
                 </div>
@@ -453,8 +453,8 @@ export default function Home() {
               </div>
             </div>
           </Reveal>
-          <div style={{ marginTop: 28, textAlign: "center" }}>
-            <Link href="/pricing" className="dim" style={{ fontSize: 14 }}>
+          <div className="mt-7 text-center">
+            <Link href="/pricing" className="dim text-[14px]">
               Full pricing details →
             </Link>
           </div>
@@ -470,7 +470,7 @@ export default function Home() {
             Comment <span className="mono">/sherlock investigate</span> on an
             issue. Review a verified PR. That&apos;s the whole workflow.
           </p>
-          <div className="hero-ctas" style={{ justifyContent: "center" }}>
+          <div className="hero-ctas justify-center">
             <Link href="/contact" className="btn btn-primary btn-lg">
               Book a demo
             </Link>

@@ -22,7 +22,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      <section className="section" style={{ borderTop: "none", paddingTop: 40 }}>
+      <section className="section border-t-0 pt-10">
         <div className="wrap">
           <Reveal>
             <div className="price-grid">
@@ -72,12 +72,12 @@ export default function Pricing() {
             </div>
           </Reveal>
 
-          <Reveal style={{ marginTop: 72 }}>
-            <div className="section-head" style={{ marginBottom: 28 }}>
-              <h2 style={{ fontSize: 26 }}>Common questions</h2>
+          <Reveal className="mt-18">
+            <div className="section-head mb-7">
+              <h2 className="text-[26px]">Common questions</h2>
             </div>
             <div className="ledger">
-              <div className="ledger-row" style={{ gridTemplateColumns: "260px 1fr" }}>
+              <div className="ledger-row grid-cols-[260px_1fr]">
                 <span className="l-key">what counts as an investigation?</span>
                 <span className="l-val">
                   One triggered run on one issue, whatever the outcome —
@@ -85,7 +85,7 @@ export default function Pricing() {
                   reproduce&quot; report. Queued duplicates don&apos;t count.
                 </span>
               </div>
-              <div className="ledger-row" style={{ gridTemplateColumns: "260px 1fr" }}>
+              <div className="ledger-row grid-cols-[260px_1fr]">
                 <span className="l-key">what if sherlock can&apos;t fix it?</span>
                 <span className="l-val">
                   You still get the artifacts: reproduction attempt, log, and
@@ -93,14 +93,14 @@ export default function Pricing() {
                   often halves the fix time.
                 </span>
               </div>
-              <div className="ledger-row" style={{ gridTemplateColumns: "260px 1fr" }}>
+              <div className="ledger-row grid-cols-[260px_1fr]">
                 <span className="l-key">can we cap spend?</span>
                 <span className="l-val">
                   Yes — hard monthly caps and per-installation rate limits are
                   configurable. No surprise overage.
                 </span>
               </div>
-              <div className="ledger-row" style={{ gridTemplateColumns: "260px 1fr" }}>
+              <div className="ledger-row grid-cols-[260px_1fr]">
                 <span className="l-key">early access means…?</span>
                 <span className="l-val">
                   Pricing is locked for 12 months for early teams, and you get

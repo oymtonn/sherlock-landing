@@ -116,6 +116,11 @@ export default function HeroHunt({ children }) {
 
   return (
     <div className={`hunt ${reduced ? "hunt-still" : ""}`} ref={boxRef}>
+      {/* the avatar's actual flight path (placeAvatar's ellipse), drawn as a
+          dashed investigation route so the bugs read as waypoints on it */}
+      <span className="hunt-orbit" aria-hidden="true" />
+      
+
       {children}
 
       {BUG_T.map((_, i) => (

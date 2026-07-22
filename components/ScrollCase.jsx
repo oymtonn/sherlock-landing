@@ -1,28 +1,62 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  CodeDiffPlaceholder,
+  RepositoryGraphPlaceholder,
+  VideoArtifactPlaceholder,
+} from "./Placeholders";
 
-// Add `waitFor` to any future scene whose animation must finish before the
-// user can continue forward.
+// `fields` are the chapter's evidence labels — real labels, placeholder
+// values (bars/chips), so each chapter reads as a case-file entry without
+// fabricating content. `graph` mounts the repository evidence graph.
 const SCENES = [
-  { title: "Start with the bug." },
-  { title: "Follow the evidence.", waitFor: "commentSubmission" },
-  { title: "Make the smallest change." },
-  { title: "Prove it before it ships." },
+  {
+    title: "Start with the bug.",
+    fields: [
+      { label: "observed behavior", w: 88 },
+      { label: "expected behavior", w: 72 },
+      { label: "affected route", w: 46 },
+      { label: "reproduction", chip: { tone: "warn", text: "captured" } },
+    ],
+  },
+  {
+    title: "Follow the evidence.",
+    fields: [
+      { label: "relevant file path", w: 78 },
+      { label: "runtime signal", w: 56 },
+      { label: "current hypothesis", w: 84 },
+    ],
+    graph: true,
+  },
+  {
+    title: "Make the smallest change.",
+    fields: [
+      { label: "root cause", w: 80 },
+      { label: "patch scope", w: 38 },
+      { label: "untouched code", w: 62 },
+    ],
+  },
+  {
+    title: "Prove the fix via replay. ",
+    fields: [
+      { label: "same path, replayed", w: 70 },
+      { label: "result", chip: { tone: "verified", text: "✓ verified" } },
+    ],
+  },
 ];
 
 const COMMAND = "/sherlock investigate";
 const MORPH_END = 0.2;
-const COMMENT_SEQUENCE_FALLBACK = 2400;
 const COMMAND_SCROLL_SPAN = 0.11;
 const MOBILE_COMMAND_SCROLL_SPAN = 0.15;
+const POINTER_APPROACH_DURATION = 600;
+const POINTER_ARRIVAL_THRESHOLD = 0.98;
 
 const sceneProgress = (index) =>
   index / Math.max(1, SCENES.length - 1);
 
-const COMMENT_SCENE_INDEX = SCENES.findIndex(
-  (scene) => scene.waitFor === "commentSubmission"
-);
+const COMMENT_SCENE_INDEX = 1;
 
 const timelineToScrollProgress = (timelineProgress, mobile) =>
   mobile
@@ -51,10 +85,12 @@ export default function ScrollCase() {
   const rowRefs = useRef([]);
   const sceneStopsRef = useRef(SCENES.map((_, index) => sceneProgress(index)));
   const reloadHandledRef = useRef(false);
+  const pointerProgressRef = useRef(0);
   const [active, setActive] = useState(0);
   const [commandCharacters, setCommandCharacters] = useState(0);
+  const [pointerProgress, setPointerProgress] = useState(0);
+  const [pointerTargetProgress, setPointerTargetProgress] = useState(0);
   const [commentSequenceStarted, setCommentSequenceStarted] = useState(false);
-  const [commentSequenceComplete, setCommentSequenceComplete] = useState(false);
   const [revealed, setRevealed] = useState(() =>
     SCENES.map((_, index) => index === 0)
   );
@@ -81,8 +117,10 @@ export default function ScrollCase() {
 
     setActive(0);
     setCommandCharacters(0);
+    pointerProgressRef.current = 0;
+    setPointerProgress(0);
+    setPointerTargetProgress(0);
     setCommentSequenceStarted(false);
-    setCommentSequenceComplete(false);
     setRevealed(SCENES.map((_, index) => index === 0));
     restartStory();
 
@@ -100,111 +138,55 @@ export default function ScrollCase() {
   }, []);
 
   useEffect(() => {
-    if (!commentSequenceStarted || commentSequenceComplete) return;
+    if (commentSequenceStarted) return;
 
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
-    let gateY;
-    let lastTouchY;
-    let resizeFrame;
 
-    const calculateGateY = () => {
-      const story = storyRef.current;
-      const sticky = stickyRef.current;
-      if (!story || !sticky) return undefined;
+    if (reduceMotion) {
+      pointerProgressRef.current = pointerTargetProgress;
+      setPointerProgress(pointerTargetProgress);
+      if (pointerTargetProgress >= POINTER_ARRIVAL_THRESHOLD) {
+        setCommentSequenceStarted(true);
+      }
+      return;
+    }
 
-      const rect = story.getBoundingClientRect();
-      const viewportHeight = sticky.clientHeight || window.innerHeight;
-      const travel = Math.max(1, rect.height - viewportHeight);
-      const storyTop = window.scrollY + rect.top;
-      const targetProgress = timelineToScrollProgress(
-        sceneStopsRef.current[COMMENT_SCENE_INDEX] ??
-          sceneProgress(COMMENT_SCENE_INDEX),
-        window.innerWidth <= 760
-      );
-      return storyTop + targetProgress * travel;
-    };
+    let frame;
+    let previousTime = performance.now();
 
-    gateY = calculateGateY();
-    if (gateY !== undefined && window.scrollY > gateY + 1) jumpTo(gateY);
+    const followScrollTarget = (time) => {
+      const elapsed = Math.min(50, time - previousTime);
+      previousTime = time;
 
-    const forwardKeys = new Set([
-      "ArrowDown",
-      "PageDown",
-      "End",
-      " ",
-      "Spacebar",
-    ]);
-    const isAtGate = () =>
-      gateY !== undefined && window.scrollY >= gateY - 2;
-    const preventForwardWheel = (event) => {
-      if (event.deltaY > 0 && isAtGate()) event.preventDefault();
-    };
-    const handleTouchStart = (event) => {
-      lastTouchY =
-        event.touches.length === 1 ? event.touches[0].clientY : undefined;
-    };
-    const preventForwardTouch = (event) => {
-      if (event.touches.length !== 1) {
-        lastTouchY = undefined;
+      const current = pointerProgressRef.current;
+      const distance = pointerTargetProgress - current;
+      const maxStep = elapsed / POINTER_APPROACH_DURATION;
+      const next =
+        Math.abs(distance) <= maxStep
+          ? pointerTargetProgress
+          : current + Math.sign(distance) * maxStep;
+
+      pointerProgressRef.current = next;
+      setPointerProgress(next);
+
+      if (
+        next >= POINTER_ARRIVAL_THRESHOLD &&
+        pointerTargetProgress >= POINTER_ARRIVAL_THRESHOLD
+      ) {
+        setCommentSequenceStarted(true);
         return;
       }
 
-      const currentTouchY = event.touches[0].clientY;
-      const movingForward =
-        lastTouchY !== undefined && currentTouchY < lastTouchY;
-      lastTouchY = currentTouchY;
-      if (movingForward && isAtGate()) event.preventDefault();
-    };
-    const clearTouch = () => {
-      lastTouchY = undefined;
-    };
-    const preventForwardKey = (event) => {
-      if (forwardKeys.has(event.key) && isAtGate()) event.preventDefault();
-    };
-    const enforceGatePosition = () => {
-      if (gateY !== undefined && window.scrollY > gateY + 1) {
-        jumpTo(gateY);
+      if (next !== pointerTargetProgress) {
+        frame = requestAnimationFrame(followScrollTarget);
       }
     };
-    const handleGateResize = () => {
-      if (resizeFrame) cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(() => {
-        gateY = calculateGateY();
-        enforceGatePosition();
-      });
-    };
 
-    window.addEventListener("wheel", preventForwardWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", preventForwardTouch, {
-      passive: false,
-    });
-    window.addEventListener("touchend", clearTouch, { passive: true });
-    window.addEventListener("touchcancel", clearTouch, { passive: true });
-    window.addEventListener("keydown", preventForwardKey);
-    window.addEventListener("scroll", enforceGatePosition, { passive: true });
-    window.addEventListener("resize", handleGateResize);
-
-    const timeout = window.setTimeout(
-      () => setCommentSequenceComplete(true),
-      reduceMotion ? 0 : COMMENT_SEQUENCE_FALLBACK
-    );
-
-    return () => {
-      window.clearTimeout(timeout);
-      if (resizeFrame) cancelAnimationFrame(resizeFrame);
-      window.removeEventListener("wheel", preventForwardWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", preventForwardTouch);
-      window.removeEventListener("touchend", clearTouch);
-      window.removeEventListener("touchcancel", clearTouch);
-      window.removeEventListener("keydown", preventForwardKey);
-      window.removeEventListener("scroll", enforceGatePosition);
-      window.removeEventListener("resize", handleGateResize);
-    };
-  }, [commentSequenceStarted, commentSequenceComplete]);
+    frame = requestAnimationFrame(followScrollTarget);
+    return () => cancelAnimationFrame(frame);
+  }, [pointerTargetProgress, commentSequenceStarted]);
 
   useEffect(() => {
     const story = storyRef.current;
@@ -214,12 +196,6 @@ export default function ScrollCase() {
     const track = trackRef.current;
     if (!story || !sticky || !shell || !viewport || !track) return;
 
-    const completionByKey = {
-      commentSubmission: commentSequenceComplete,
-    };
-    const blockingSceneIndex = SCENES.findIndex(
-      (scene) => scene.waitFor && !completionByKey[scene.waitFor]
-    );
     let frame;
 
     const update = () => {
@@ -291,21 +267,16 @@ export default function ScrollCase() {
         sceneStopsRef.current = sceneStops;
       }
 
+      const commentSceneProgress =
+        sceneStops[COMMENT_SCENE_INDEX] ?? sceneProgress(COMMENT_SCENE_INDEX);
+      const commentScrollProgress = timelineToScrollProgress(
+        commentSceneProgress,
+        mobile
+      );
       const rawTimelineProgress = mobile
         ? scrollProgress
         : clamp((scrollProgress - MORPH_END) / (1 - MORPH_END));
-      const blockingSceneProgress =
-        blockingSceneIndex >= 0
-          ? (sceneStops[blockingSceneIndex] ??
-            sceneProgress(blockingSceneIndex))
-          : 1;
-      const timelineProgress =
-        blockingSceneIndex >= 0 &&
-        rawTimelineProgress >= blockingSceneProgress
-          ? blockingSceneProgress
-          : rawTimelineProgress;
-      const commentSceneProgress =
-        sceneStops[COMMENT_SCENE_INDEX] ?? sceneProgress(COMMENT_SCENE_INDEX);
+      const timelineProgress = rawTimelineProgress;
       const commandTimelineStart =
         ((sceneStops[0] ?? 0) + commentSceneProgress) / 2;
       const commandStart = timelineToScrollProgress(
@@ -318,6 +289,20 @@ export default function ScrollCase() {
       const commandProgress = clamp(
         (scrollProgress - commandStart) / commandSpan
       );
+      // Let the pointer approach the Comment button while the command is
+      // being typed. Typing finishes first; the pointer then settles on the
+      // button at the comment stop before the click sequence begins.
+      const pointerStart = Math.min(commandStart, commentScrollProgress);
+      const pointerSpan = commentScrollProgress - pointerStart;
+      const nextPointerProgress = reduceMotion
+        ? scrollProgress >= commentScrollProgress
+          ? 1
+          : 0
+        : pointerSpan > 0.001
+          ? clamp((scrollProgress - pointerStart) / pointerSpan)
+          : scrollProgress >= commentScrollProgress
+            ? 1
+            : 0;
       const nextCommandCharacters = reduceMotion
         ? commandProgress > 0
           ? COMMAND.length
@@ -336,10 +321,10 @@ export default function ScrollCase() {
         }
       });
 
-      track.style.setProperty(
-        "--timeline-progress",
-        `${timelineProgress * 100}%`
-      );
+      // track.style.setProperty(
+      //   "--timeline-progress",
+      //   `${timelineProgress * 100}%`
+      // );
       track.style.transform = `translateY(-${timelineProgress * maxOffset}px)`;
 
       setActive((current) =>
@@ -348,9 +333,9 @@ export default function ScrollCase() {
       setCommandCharacters((current) =>
         current === nextCommandCharacters ? current : nextCommandCharacters
       );
-      if (rawTimelineProgress >= commentSceneProgress) {
-        setCommentSequenceStarted(true);
-      }
+      setPointerTargetProgress((current) =>
+        current === nextPointerProgress ? current : nextPointerProgress
+      );
       setRevealed((current) => {
         let changed = false;
         const next = current.map((value, index) => {
@@ -389,7 +374,7 @@ export default function ScrollCase() {
       window.removeEventListener("resize", handleResize);
       resizeObserver?.disconnect();
     };
-  }, [commentSequenceComplete]);
+  }, []);
 
   return (
     <section className="scroll-case" aria-labelledby="scroll-case-title">
@@ -403,7 +388,19 @@ export default function ScrollCase() {
 
       <div className="case-morph-story" ref={storyRef}>
         <div className="case-morph-sticky" ref={stickyRef}>
-          <div className="case-morph-shell" ref={shellRef}>
+          <div className={`case-morph-shell scene-${active}`} ref={shellRef}>
+            {/* per-chapter ambient environment — purely decorative layers
+                crossfaded by the shell's scene-N class */}
+            <div className="case-shell-ambient" aria-hidden="true">
+              <i className="amb amb-0" />
+              <i className="amb amb-1" />
+              <i className="amb amb-2" />
+              <i className="amb amb-3" />
+            </div>
+            {/* case-file chrome: corner registration marks + chapter counter */}
+            <div className="case-shell-frame" aria-hidden="true">
+
+            </div>
             <div className="case-morph-viewport" ref={viewportRef}>
               <div className="case-story-list" ref={trackRef}>
                 {SCENES.map((scene, index) => (
@@ -430,18 +427,7 @@ export default function ScrollCase() {
                             Add a comment
                           </strong>
 
-                          <div
-                            className="case-github-composer"
-                            onAnimationEnd={(event) => {
-                              if (
-                                event.target === event.currentTarget &&
-                                event.animationName ===
-                                  "case-github-composer-confirm"
-                              ) {
-                                setCommentSequenceComplete(true);
-                              }
-                            }}
-                          >
+                          <div className="case-github-composer">
                             <div
                               className="case-github-toolbar"
                               aria-hidden="true"
@@ -483,9 +469,6 @@ export default function ScrollCase() {
                               <span className="case-github-button-label">
                                 Comment
                               </span>
-                              <span className="case-github-button-loading">
-                                <i /> Posting
-                              </span>
                               <span className="case-github-button-success">
                                 <b>✓</b> Posted
                               </span>
@@ -495,35 +478,61 @@ export default function ScrollCase() {
                           <span
                             className="case-github-pointer"
                             aria-hidden="true"
+                            style={{
+                              "--pointer-delay": `${-pointerProgress}s`,
+                            }}
                           >
                             <svg viewBox="0 0 24 28" focusable="false">
                               <path d="M3 2.5v19.2l4.9-4.7 3.5 8 3.8-1.7-3.6-7.6h7L3 2.5Z" />
                             </svg>
                           </span>
                         </div>
+                      ) : index === 2 ? (
+                        <CodeDiffPlaceholder />
                       ) : (
-                        <div className="case-media-placeholder">
-                          <span className="case-media-play" aria-hidden="true">
-                            ▶
-                          </span>
-                          <span className="mono">Image or short video</span>
-                          <small className="mono">16:10 recommended</small>
-                        </div>
+                        <VideoArtifactPlaceholder
+                          tone={index === 0 ? "bug" : "verified"}
+                          badge={index === 0 ? "failed" : "passed"}
+                          label={
+                            index === 0
+                              ? "Original bug reproduction recording"
+                              : "Post-fix verification recording"
+                          }
+                          ratio="16:10"
+                        />
                       )}
                     </div>
 
-                    <div className="case-story-node" aria-hidden="true" />
+                    
 
                     <div className="case-story-copy">
                       <h3>{scene.title}</h3>
-                      <div
-                        className="case-copy-placeholder"
-                        aria-label="Text placeholder"
+                      <dl
+                        className="case-evidence"
+                        aria-label="Case evidence fields (placeholder values)"
                       >
-                        <i />
-                        <i />
-                        <i />
-                      </div>
+                        {scene.fields.map((field) => (
+                          <div key={field.label}>
+                            <dt>{field.label}</dt>
+                            <dd>
+                              {field.chip ? (
+                                <span className={`chip chip-${field.chip.tone}`}>
+                                  {field.chip.text}
+                                </span>
+                              ) : (
+                                <i
+                                  className="ph-bar"
+                                  style={{ width: `${field.w}%` }}
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                      {scene.graph ? (
+                        <RepositoryGraphPlaceholder className="case-evidence-graph" />
+                      ) : null}
                     </div>
                   </article>
                 ))}

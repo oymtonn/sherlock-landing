@@ -1,4 +1,5 @@
 import Link from "next/link";
+import GitHubSignInButton from "@/components/auth/GitHubSignInButton";
 import HeroHunt from "@/components/HeroHunt";
 import ScrollCase from "@/components/ScrollCase";
 import Spotlight from "@/components/Spotlight";
@@ -35,9 +36,10 @@ export default function Home() {
             </span>
           </p>
           <div className="hero-ctas">
-            <Link href="/contact" className="btn btn-primary btn-lg">
-              TRY IT FOR FREE
-            </Link>
+            <GitHubSignInButton
+              label="TRY IT FOR FREE"
+              className="btn btn-primary btn-lg"
+            />
           </div>
         </div>
 
@@ -130,9 +132,10 @@ export default function Home() {
               No credit card required. No risk. No commitment. Just a free trial of Sherlock.
             </p>
             <div className="hero-ctas">
-              <Link href="/contact" className="btn btn-primary btn-lg">
-                Start investigating
-              </Link>
+              <GitHubSignInButton
+                label="Start investigating"
+                className="btn btn-primary btn-lg"
+              />
               <Link href="/pricing" className="underline btn-lg">
                 See pricing
               </Link>

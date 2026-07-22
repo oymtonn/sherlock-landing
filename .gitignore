@@ -5,3 +5,4 @@ out/
 npm-debug.log*
 .DS_Store
 .env*
+!.env.example

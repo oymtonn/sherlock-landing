@@ -1,6 +1,8 @@
 node_modules/
 .next/
+.next-dev/
 out/
 npm-debug.log*
 .DS_Store
 .env*
+!.env.example

@@ -6,15 +6,6 @@ export default function Footer() {
     <footer className="border-t border-[color:var(--line-soft)] pt-14 pb-10 mt-auto text-[14px] text-[color:var(--ink-faint)]">
       <div className="wrap">
         <div className="flex justify-between gap-10 flex-wrap">
-          <div className="footer-col max-w-[260px]">
-            <span className="brand">
-              <Logo />
-              Sherlock
-            </span>
-            <span className="mt-2">
-              GitHub bugs to verified pull requests.
-            </span>
-          </div>
           <div className="footer-col">
             <b>Product</b>
             <Link href="/product">Overview</Link>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import Logo from "./Logo";
 
 const LINKS = [
@@ -10,6 +11,7 @@ const LINKS = [
   { href: "/security", label: "Security" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
+  { href: "/contact", label: "Book a demo" },
 ];
 
 export default function Nav() {
@@ -23,6 +25,7 @@ export default function Nav() {
     <header className="nav">
       <div className="wrap nav-inner">
         <Link href="/" className="brand" onClick={() => setOpen(false)}>
+          <Logo />
           Sherlock
         </Link>
         <div className="nav-cta">
@@ -48,7 +51,7 @@ export default function Nav() {
           aria-expanded={open}
           aria-label="Toggle navigation"
         >
-          {open ? "Close" : "Menu"}
+          {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
         </button>
       </div>
       <div className={`nav-mobile ${open ? "open" : ""}`}>
@@ -57,9 +60,6 @@ export default function Nav() {
             {l.label}
           </Link>
         ))}
-        <Link href="/contact" onClick={() => setOpen(false)}>
-          Book a demo
-        </Link>
       </div>
     </header>
   );

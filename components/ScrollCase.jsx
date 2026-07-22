@@ -7,9 +7,6 @@ import {
   VideoArtifactPlaceholder,
 } from "./Placeholders";
 
-// Add `waitFor` to any future scene whose animation must finish before the
-// user can continue forward.
-//
 // `fields` are the chapter's evidence labels — real labels, placeholder
 // values (bars/chips), so each chapter reads as a case-file entry without
 // fabricating content. `graph` mounts the repository evidence graph.
@@ -25,7 +22,6 @@ const SCENES = [
   },
   {
     title: "Follow the evidence.",
-    waitFor: "commentSubmission",
     fields: [
       { label: "relevant file path", w: 78 },
       { label: "runtime signal", w: 56 },
@@ -42,7 +38,7 @@ const SCENES = [
     ],
   },
   {
-    title: "Prove it before it ships.",
+    title: "Prove the fix via replay. ",
     fields: [
       { label: "same path, replayed", w: 70 },
       { label: "result", chip: { tone: "verified", text: "✓ verified" } },
@@ -55,19 +51,12 @@ const MORPH_END = 0.2;
 const COMMAND_SCROLL_SPAN = 0.11;
 const MOBILE_COMMAND_SCROLL_SPAN = 0.15;
 const POINTER_APPROACH_DURATION = 600;
-const COMMENT_CLICK_SCROLL_SPAN = 0.04;
-const MOBILE_COMMENT_CLICK_SCROLL_SPAN = 0.05;
-// The gate clamps scrolling at (or a rounded pixel below) the comment stop,
-// so the scrubbed pointer target settles fractionally short of 1. Treat
-// "close enough" as arrived or the sequence can never start.
 const POINTER_ARRIVAL_THRESHOLD = 0.98;
 
 const sceneProgress = (index) =>
   index / Math.max(1, SCENES.length - 1);
 
-const COMMENT_SCENE_INDEX = SCENES.findIndex(
-  (scene) => scene.waitFor === "commentSubmission"
-);
+const COMMENT_SCENE_INDEX = 1;
 
 const timelineToScrollProgress = (timelineProgress, mobile) =>
   mobile
@@ -101,10 +90,7 @@ export default function ScrollCase() {
   const [commandCharacters, setCommandCharacters] = useState(0);
   const [pointerProgress, setPointerProgress] = useState(0);
   const [pointerTargetProgress, setPointerTargetProgress] = useState(0);
-  const [commentClickProgress, setCommentClickProgress] = useState(0);
-  const [commentSequenceArmed, setCommentSequenceArmed] = useState(false);
   const [commentSequenceStarted, setCommentSequenceStarted] = useState(false);
-  const [commentSequenceComplete, setCommentSequenceComplete] = useState(false);
   const [revealed, setRevealed] = useState(() =>
     SCENES.map((_, index) => index === 0)
   );
@@ -134,10 +120,7 @@ export default function ScrollCase() {
     pointerProgressRef.current = 0;
     setPointerProgress(0);
     setPointerTargetProgress(0);
-    setCommentClickProgress(0);
-    setCommentSequenceArmed(false);
     setCommentSequenceStarted(false);
-    setCommentSequenceComplete(false);
     setRevealed(SCENES.map((_, index) => index === 0));
     restartStory();
 
@@ -206,114 +189,6 @@ export default function ScrollCase() {
   }, [pointerTargetProgress, commentSequenceStarted]);
 
   useEffect(() => {
-    if (
-      !commentSequenceArmed ||
-      commentSequenceStarted ||
-      commentSequenceComplete
-    ) {
-      return;
-    }
-
-    let gateY;
-    let lastTouchY;
-    let resizeFrame;
-
-    const calculateGateY = () => {
-      const story = storyRef.current;
-      const sticky = stickyRef.current;
-      if (!story || !sticky) return undefined;
-
-      const rect = story.getBoundingClientRect();
-      const viewportHeight = sticky.clientHeight || window.innerHeight;
-      const travel = Math.max(1, rect.height - viewportHeight);
-      const storyTop = window.scrollY + rect.top;
-      const targetProgress = timelineToScrollProgress(
-        sceneStopsRef.current[COMMENT_SCENE_INDEX] ??
-          sceneProgress(COMMENT_SCENE_INDEX),
-        window.innerWidth <= 760
-      );
-      return storyTop + targetProgress * travel;
-    };
-
-    gateY = calculateGateY();
-    if (gateY !== undefined && window.scrollY > gateY + 1) jumpTo(gateY);
-
-    const forwardKeys = new Set([
-      "ArrowDown",
-      "PageDown",
-      "End",
-      " ",
-      "Spacebar",
-    ]);
-    const isAtGate = () =>
-      gateY !== undefined && window.scrollY >= gateY - 2;
-    const preventForwardWheel = (event) => {
-      if (event.deltaY > 0 && isAtGate()) event.preventDefault();
-    };
-    const handleTouchStart = (event) => {
-      lastTouchY =
-        event.touches.length === 1 ? event.touches[0].clientY : undefined;
-    };
-    const preventForwardTouch = (event) => {
-      if (event.touches.length !== 1) {
-        lastTouchY = undefined;
-        return;
-      }
-
-      const currentTouchY = event.touches[0].clientY;
-      const movingForward =
-        lastTouchY !== undefined && currentTouchY < lastTouchY;
-      lastTouchY = currentTouchY;
-      if (movingForward && isAtGate()) event.preventDefault();
-    };
-    const clearTouch = () => {
-      lastTouchY = undefined;
-    };
-    const preventForwardKey = (event) => {
-      if (forwardKeys.has(event.key) && isAtGate()) event.preventDefault();
-    };
-    const enforceGatePosition = () => {
-      if (gateY !== undefined && window.scrollY > gateY + 1) {
-        jumpTo(gateY);
-      }
-    };
-    const handleGateResize = () => {
-      if (resizeFrame) cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(() => {
-        gateY = calculateGateY();
-        enforceGatePosition();
-      });
-    };
-
-    window.addEventListener("wheel", preventForwardWheel, { passive: false });
-    window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", preventForwardTouch, {
-      passive: false,
-    });
-    window.addEventListener("touchend", clearTouch, { passive: true });
-    window.addEventListener("touchcancel", clearTouch, { passive: true });
-    window.addEventListener("keydown", preventForwardKey);
-    window.addEventListener("scroll", enforceGatePosition, { passive: true });
-    window.addEventListener("resize", handleGateResize);
-
-    return () => {
-      if (resizeFrame) cancelAnimationFrame(resizeFrame);
-      window.removeEventListener("wheel", preventForwardWheel);
-      window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", preventForwardTouch);
-      window.removeEventListener("touchend", clearTouch);
-      window.removeEventListener("touchcancel", clearTouch);
-      window.removeEventListener("keydown", preventForwardKey);
-      window.removeEventListener("scroll", enforceGatePosition);
-      window.removeEventListener("resize", handleGateResize);
-    };
-  }, [
-    commentSequenceArmed,
-    commentSequenceStarted,
-    commentSequenceComplete,
-  ]);
-
-  useEffect(() => {
     const story = storyRef.current;
     const sticky = stickyRef.current;
     const shell = shellRef.current;
@@ -321,12 +196,6 @@ export default function ScrollCase() {
     const track = trackRef.current;
     if (!story || !sticky || !shell || !viewport || !track) return;
 
-    const completionByKey = {
-      commentSubmission: commentSequenceComplete,
-    };
-    const blockingSceneIndex = SCENES.findIndex(
-      (scene) => scene.waitFor && !completionByKey[scene.waitFor]
-    );
     let frame;
 
     const update = () => {
@@ -404,34 +273,10 @@ export default function ScrollCase() {
         commentSceneProgress,
         mobile
       );
-      const clickScrollSpan = reduceMotion
-        ? 0
-        : mobile
-          ? MOBILE_COMMENT_CLICK_SCROLL_SPAN
-          : COMMENT_CLICK_SCROLL_SPAN;
-      const commentClickEnd = commentScrollProgress + clickScrollSpan;
-      const narrativeScrollProgress =
-        scrollProgress <= commentScrollProgress
-          ? scrollProgress
-          : scrollProgress <= commentClickEnd
-            ? commentScrollProgress
-            : commentScrollProgress +
-              ((scrollProgress - commentClickEnd) /
-                Math.max(0.001, 1 - commentClickEnd)) *
-                (1 - commentScrollProgress);
       const rawTimelineProgress = mobile
-        ? narrativeScrollProgress
-        : clamp((narrativeScrollProgress - MORPH_END) / (1 - MORPH_END));
-      const blockingSceneProgress =
-        blockingSceneIndex >= 0
-          ? (sceneStops[blockingSceneIndex] ??
-            sceneProgress(blockingSceneIndex))
-          : 1;
-      const timelineProgress =
-        blockingSceneIndex >= 0 &&
-        rawTimelineProgress >= blockingSceneProgress
-          ? blockingSceneProgress
-          : rawTimelineProgress;
+        ? scrollProgress
+        : clamp((scrollProgress - MORPH_END) / (1 - MORPH_END));
+      const timelineProgress = rawTimelineProgress;
       const commandTimelineStart =
         ((sceneStops[0] ?? 0) + commentSceneProgress) / 2;
       const commandStart = timelineToScrollProgress(
@@ -444,10 +289,10 @@ export default function ScrollCase() {
       const commandProgress = clamp(
         (scrollProgress - commandStart) / commandSpan
       );
-      const pointerStart = Math.min(
-        commandStart + commandSpan,
-        commentScrollProgress
-      );
+      // Let the pointer approach the Comment button while the command is
+      // being typed. Typing finishes first; the pointer then settles on the
+      // button at the comment stop before the click sequence begins.
+      const pointerStart = Math.min(commandStart, commentScrollProgress);
       const pointerSpan = commentScrollProgress - pointerStart;
       const nextPointerProgress = reduceMotion
         ? scrollProgress >= commentScrollProgress
@@ -466,14 +311,6 @@ export default function ScrollCase() {
             COMMAND.length,
             Math.floor(commandProgress * (COMMAND.length + 1))
           );
-      const nextCommentClickProgress =
-        clickScrollSpan > 0.001
-          ? clamp(
-              (scrollProgress - commentScrollProgress) / clickScrollSpan
-            )
-          : scrollProgress >= commentScrollProgress
-            ? 1
-            : 0;
       let nextActive = 0;
       let nearestDistance = Number.POSITIVE_INFINITY;
       sceneStops.forEach((stop, index) => {
@@ -499,19 +336,6 @@ export default function ScrollCase() {
       setPointerTargetProgress((current) =>
         current === nextPointerProgress ? current : nextPointerProgress
       );
-      if (commentSequenceStarted) {
-        setCommentClickProgress((current) =>
-          current === nextCommentClickProgress
-            ? current
-            : nextCommentClickProgress
-        );
-        if (nextCommentClickProgress >= 1) {
-          setCommentSequenceComplete(true);
-        }
-      }
-      if (rawTimelineProgress >= commentSceneProgress) {
-        setCommentSequenceArmed(true);
-      }
       setRevealed((current) => {
         let changed = false;
         const next = current.map((value, index) => {
@@ -550,7 +374,7 @@ export default function ScrollCase() {
       window.removeEventListener("resize", handleResize);
       resizeObserver?.disconnect();
     };
-  }, [commentSequenceStarted, commentSequenceComplete]);
+  }, []);
 
   return (
     <section className="scroll-case" aria-labelledby="scroll-case-title">
@@ -598,9 +422,6 @@ export default function ScrollCase() {
                             commentSequenceStarted ? " is-submitting" : ""
                           }`}
                           aria-label="GitHub issue comment composer"
-                          style={{
-                            "--comment-click-delay": `${-commentClickProgress}s`,
-                          }}
                         >
                           <strong className="case-github-title">
                             Add a comment

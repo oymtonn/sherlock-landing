@@ -23,16 +23,15 @@ export default function Home() {
         <div className="wrap">
           <HeroHunt>
             <h1>
-              <span className="block">GitHub bugs to</span>
+              <span className="block">Once you’re live,</span>
               <span className="block whitespace-nowrap">
-                <em>verified</em> pull requests
+                <em>stay live.</em>
               </span>
             </h1>
           </HeroHunt>
-          <p className="text-[#E7E7E7] font-bold text-[25px] max-w-[620px] mx-auto mb-8">
-            <span className="block">Vibe-code your app today.</span>
-            <span className="block">
-              Sherlock keeps it working tomorrow.
+          <p className="text-[#E7E7E7] font-bold text-[25px] max-w-[760px] mx-auto mb-8">
+            <span className="block md:whitespace-nowrap">
+              Sherlock fixes bugs so your website keeps running.
             </span>
           </p>
           <div className="hero-ctas">
@@ -54,7 +53,7 @@ export default function Home() {
         <div className="wrap">
           <div className="section-head verify-head">
             
-            <h2 id="verify-title">See the bug. See it gone.</h2>
+            <h2 id="verify-title">Our replay feature allows you to verify fixes before they ship.</h2>
             <p>
               Sherlock records the failure, applies the fix, and runs the
               same path again.
@@ -109,15 +108,12 @@ export default function Home() {
       <section className="pr-section" aria-labelledby="pr-title">
         <div className="wrap">
           <div className="section-head">
-            <h2 id="pr-title">Everything lands in one pull request.</h2>
-            <p>The fix, the reasoning, and the proof—ready for review.</p>
+            <h2 id="pr-title">Fixed? Great, approve the pull request.</h2>
+            <p>Never have to break your production experience for your users again.</p>
           </div>
 
           <div className="pr-stage">
             <i className="corner-marks pr-stage-marks" aria-hidden="true" />
-            <span className="pr-stamp" aria-hidden="true">
-              verified · slk-4127
-            </span>
             <PullRequestPlaceholder />
           </div>
         </div>

@@ -1,3 +1,5 @@
+import { GitPullRequest } from "lucide-react";
+
 // ---------------------------------------------------------------------------
 // Sherlock placeholder system — designed stand-ins for product media that
 // hasn't been produced yet. Every placeholder:
@@ -128,7 +130,7 @@ export function CodeDiffPlaceholder({
       </span>
       <DiffLines />
       <span className="diff-art-foot mono" aria-hidden="true">
-        <span>surrounding code untouched</span>
+        <span>We only fix what's needed</span>
         <span>1 file</span>
       </span>
     </div>
@@ -212,27 +214,17 @@ export function PullRequestPlaceholder() {
       aria-label="Pull request placeholder — Sherlock's final output"
     >
       <header className="pr-art-head">
-        <span className="pr-ico" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path
-              d="M4.5 3.5a1.5 1.5 0 1 1 0 .01M4.5 5v6m0 0a1.5 1.5 0 1 0 0 .01M11.5 11V6.8c0-1-.5-1.8-1.8-1.8H8.5m0 0L10 3.5M8.5 5 10 6.5m1.5 4.5a1.5 1.5 0 1 0 0 .01"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+        <span className="pr-art-open">
+          <GitPullRequest size={18} strokeWidth={1.75} aria-hidden="true" />
+          <span>Open</span>
         </span>
         <span className="pr-art-titles">
           <i className="ph-bar" style={{ width: "56%" }} aria-hidden="true" />
           <span className="pr-art-meta mono" aria-hidden="true">
-            <span className="pr-art-branch">sherlock/fix-slk-4127</span>
+            <span className="pr-art-branch">sherlock/investigation</span>
             <b>→</b>
             <span className="pr-art-branch">main</span>
           </span>
-        </span>
-        <span className="pr-art-num mono" aria-hidden="true">
-          #···
         </span>
         <span className="chip chip-verified">✓ verification passed</span>
       </header>
@@ -261,17 +253,15 @@ export function PullRequestPlaceholder() {
             <ul className="pr-art-checks mono">
               <li className="is-fail">
                 <i aria-hidden="true">✕</i>
-                <span>replay 01 · unpatched — failed</span>
+                <span>replay 01 · unpatched</span>
               </li>
               <li className="is-pass">
                 <i aria-hidden="true">✓</i>
-                <span>replay 02 · patched — passed</span>
+                <span>replay 02 · patched</span>
               </li>
             </ul>
           </section>
-        </div>
 
-        <div className="pr-art-col">
           <section className="pr-region">
             <h3 className="mono">changed files</h3>
             <span className="pr-art-file" aria-hidden="true">
@@ -289,27 +279,13 @@ export function PullRequestPlaceholder() {
               <DiffLines compact />
             </span>
           </section>
-
-          <section className="pr-region">
-            <h3 className="mono">reproduction evidence</h3>
-            <span className="pr-art-thumbs" aria-hidden="true">
-              <span className="pr-thumb is-fail mono">
-                <b>✕</b>
-                before
-              </span>
-              <span className="pr-thumb is-pass mono">
-                <b>✓</b>
-                after
-              </span>
-            </span>
-          </section>
         </div>
       </div>
 
       <footer className="pr-art-foot mono">
-        <span>pull request ready for review</span>
+        <span></span>
         <span className="pr-art-review" aria-hidden="true">
-          Review changes
+          Merge pull request
         </span>
       </footer>
     </article>

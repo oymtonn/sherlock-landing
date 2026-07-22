@@ -4495,4 +4495,117 @@ h3 {
   }
 }
 
+/* ------------------------------------------------------------------ auth
+   Minimal additions for the sign-in button states and the onboarding /
+   dashboard panels. Reuses .panel, .btn, .chip and the semantic colors. */
+
+.auth-signin {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.auth-signin .btn[disabled] {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+.auth-signin-error {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  font-size: 11px;
+  color: var(--diff-red);
+  white-space: nowrap;
+}
+
+.nav-mobile-auth {
+  padding-top: 16px;
+}
+
+.auth-section {
+  padding: 96px 0 120px;
+  min-height: 62vh;
+  display: flex;
+  align-items: center;
+}
+
+.auth-panel {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.auth-panel .panel-bar .chip {
+  margin-left: auto;
+}
+
+.auth-panel-body {
+  padding: 28px 28px 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.auth-panel-body h1 {
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.auth-panel-body p {
+  color: var(--ink-dim);
+  max-width: 46ch;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.auth-brand .brand-mark {
+  width: 34px;
+  height: auto;
+}
+
+.auth-panel-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.auth-loading {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.auth-install-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-dim);
+}
+
+.auth-install-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-install-list strong {
+  color: var(--ink);
+}
+
+.auth-logout {
+  margin-top: 10px;
+}
+
 } /* end @layer components */

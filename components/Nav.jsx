@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import Logo from "./Logo";
+import GitHubSignInButton from "./auth/GitHubSignInButton";
 
 const LINKS = [
   { href: "/product", label: "Product" },
@@ -38,12 +39,8 @@ export default function Nav() {
         </nav>
           <span className="border-l h-8 inline-block"></span>
 
-          <Link href="/" className="btn btn-ghost">
-            Log In
-          </Link>
-          <Link href="/" className="btn btn-primary">
-            Get Started
-          </Link>
+          <GitHubSignInButton label="Log In" className="btn btn-ghost" />
+          <GitHubSignInButton label="Get Started" className="btn btn-primary" />
         </div>
         <button
           className="nav-toggle"
@@ -60,6 +57,13 @@ export default function Nav() {
             {l.label}
           </Link>
         ))}
+        <div className="nav-mobile-auth">
+          <GitHubSignInButton
+            label="Sign in with GitHub"
+            className="btn btn-primary"
+            showIcon
+          />
+        </div>
       </div>
     </header>
   );

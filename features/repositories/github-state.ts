@@ -44,23 +44,6 @@ export function filterRepositories(
   );
 }
 
-export function toggleSelectedRepositoryId(
-  selectedRepositoryIds: string[],
-  repositoryId: string,
-) {
-  return selectedRepositoryIds.includes(repositoryId)
-    ? selectedRepositoryIds.filter((id) => id !== repositoryId)
-    : [...selectedRepositoryIds, repositoryId];
-}
-
-export function getSelectedRepositories(
-  repositories: ConnectedRepository[],
-  selectedRepositoryIds: string[],
-) {
-  const selectedIds = new Set(selectedRepositoryIds);
-  return repositories.filter((repository) => selectedIds.has(repository.id));
-}
-
 export function getGitHubCallbackNotice(
   github: string | undefined,
 ): { type: "success" | "error"; message: string } | null {

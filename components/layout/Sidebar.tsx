@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import UserMenu from "@/features/auth/UserMenu";
-import RepositoryPickerModal from "@/features/repositories/components/RepositoryPickerModal";
 import {
   getConnectedRepositories,
   getGitHubInstallUrl,
@@ -20,14 +19,11 @@ import {
   beginGitHubInstallation,
   getAddRepositoryAction,
   getGitHubCallbackNotice,
-  getSelectedRepositories,
   INITIAL_REPOSITORY_LOAD_STATE,
   removeGitHubCallbackParams,
-  toggleSelectedRepositoryId,
   type RepositoryLoadState,
 } from "@/features/repositories/github-state";
 
-const SELECTED_REPOSITORY_IDS_KEY = "sherlock:selected-repository-ids";
 type Notice = NonNullable<ReturnType<typeof getGitHubCallbackNotice>>;
 
 export default function Sidebar() {
@@ -39,10 +35,6 @@ export default function Sidebar() {
   const [repositoryState, setRepositoryState] = useState<RepositoryLoadState>(
     INITIAL_REPOSITORY_LOAD_STATE,
   );
-  const [selectedRepositoryIds, setSelectedRepositoryIds] = useState<string[]>(
-    [],
-  );
-  const [isRepositoryPickerOpen, setIsRepositoryPickerOpen] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const showRepositories = repositoriesOpen;
@@ -89,7 +81,6 @@ export default function Sidebar() {
 
       let response = await loadRepositories();
       if (cancelled) return;
-      setSelectedRepositoryIds(readSelectedRepositoryIds());
 
       // The callback intentionally permits repository reconciliation to finish
       // asynchronously after ownership is verified. Retry an initially empty
@@ -153,31 +144,20 @@ export default function Sidebar() {
     if (action === "install") {
       void handleInstall();
     } else if (action === "browse") {
-      setIsRepositoryPickerOpen(true);
+      const manageUrl =
+        repositoryState.status === "ready"
+          ? repositoryState.installations[0]?.manageUrl
+          : undefined;
+      if (manageUrl) {
+        window.location.assign(manageUrl);
+      }
     } else if (repositoryState.status === "error") {
       void loadRepositories();
     }
   }
 
-  function handleToggleRepository(repositoryId: string) {
-    setSelectedRepositoryIds((currentIds) => {
-      const nextIds = toggleSelectedRepositoryId(currentIds, repositoryId);
-      window.localStorage.setItem(
-        SELECTED_REPOSITORY_IDS_KEY,
-        JSON.stringify(nextIds),
-      );
-      return nextIds;
-    });
-  }
-
   const repositories =
     repositoryState.status === "ready" ? repositoryState.repositories : [];
-  const installations =
-    repositoryState.status === "ready" ? repositoryState.installations : [];
-  const selectedRepositories = getSelectedRepositories(
-    repositories,
-    selectedRepositoryIds,
-  );
 
   const toggleRepositories = () => {
     if (!isOpen) {
@@ -301,7 +281,7 @@ export default function Sidebar() {
                   aria-hidden="true"
                   className="absolute bottom-5 left-0 top-1 w-px bg-border"
                 />
-                {selectedRepositories.map((repository) => {
+                {repositories.map((repository) => {
                   const href = `/dashboard/${repository.id}`;
                   // trailingSlash is on, so the live pathname ends with "/".
                   const isActive =
@@ -337,34 +317,6 @@ export default function Sidebar() {
         </nav>
       </aside>
 
-      {isRepositoryPickerOpen && repositoryState.status === "ready" ? (
-        <RepositoryPickerModal
-          repositories={repositories}
-          installations={installations}
-          selectedRepositoryIds={selectedRepositoryIds}
-          onToggleRepository={handleToggleRepository}
-          onClose={() => setIsRepositoryPickerOpen(false)}
-        />
-      ) : null}
     </>
   );
-}
-
-function readSelectedRepositoryIds() {
-  try {
-    const storedIds = JSON.parse(
-      window.localStorage.getItem(SELECTED_REPOSITORY_IDS_KEY) || "[]",
-    ) as unknown;
-
-    if (
-      Array.isArray(storedIds) &&
-      storedIds.every((id) => typeof id === "string" && /^[0-9]+$/.test(id))
-    ) {
-      return storedIds as string[];
-    }
-  } catch {
-    window.localStorage.removeItem(SELECTED_REPOSITORY_IDS_KEY);
-  }
-
-  return [];
 }

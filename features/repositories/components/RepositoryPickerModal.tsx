@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Lock, Plus, Search, Settings, Unlock, X } from "lucide-react";
+import { Check, Lock, Search, Settings, Unlock, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { filterRepositories } from "../github-state";
 import type { ConnectedRepository, GitHubInstallation } from "../types";
@@ -8,14 +8,14 @@ import type { ConnectedRepository, GitHubInstallation } from "../types";
 export default function RepositoryPickerModal({
   repositories,
   installations,
-  selectedRepositoryIds,
-  onToggleRepository,
+  selectedRepositoryId,
+  onSelectRepository,
   onClose,
 }: {
   repositories: ConnectedRepository[];
   installations: GitHubInstallation[];
-  selectedRepositoryIds: string[];
-  onToggleRepository: (repositoryId: string) => void;
+  selectedRepositoryId: string | null;
+  onSelectRepository: (repositoryId: string) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");
@@ -52,10 +52,10 @@ export default function RepositoryPickerModal({
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div>
             <h2 id="repository-picker-title" className="text-lg font-semibold">
-              Add repositories
+              Browse repositories
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Choose repositories to keep in your sidebar.
+              Open a repository Sherlock is already authorized to use.
             </p>
           </div>
           <button
@@ -90,16 +90,14 @@ export default function RepositoryPickerModal({
           {filteredRepositories.length > 0 ? (
             <div className="grid gap-1">
               {filteredRepositories.map((repository) => {
-                const isSelected = selectedRepositoryIds.includes(
-                  repository.id,
-                );
+                const isSelected = selectedRepositoryId === repository.id;
 
                 return (
                   <button
                     key={repository.id}
                     type="button"
-                    aria-pressed={isSelected}
-                    onClick={() => onToggleRepository(repository.id)}
+                    aria-current={isSelected ? "page" : undefined}
+                    onClick={() => onSelectRepository(repository.id)}
                     className="flex w-full items-center gap-3 rounded-sm px-3 py-3 text-left hover:bg-surface"
                   >
                     {repository.ownerAvatarUrl ? (
@@ -137,10 +135,8 @@ export default function RepositoryPickerModal({
                     >
                       {isSelected ? (
                         <Check className="size-3.5" aria-hidden="true" />
-                      ) : (
-                        <Plus className="size-3.5" aria-hidden="true" />
-                      )}
-                      {isSelected ? "Added" : "Add"}
+                      ) : null}
+                      {isSelected ? "Current" : "Open"}
                     </span>
                   </button>
                 );
@@ -148,9 +144,15 @@ export default function RepositoryPickerModal({
             </div>
           ) : (
             <div className="px-4 py-12 text-center">
-              <p className="text-sm font-medium">No repositories found</p>
+              <p className="text-sm font-medium">
+                {repositories.length === 0
+                  ? "Sherlock has no repository access"
+                  : "No authorized repositories match your search"}
+              </p>
               <p className="mt-1 text-sm text-muted">
-                Try a different owner or repository name.
+                {repositories.length === 0
+                  ? "Change the GitHub App installation access to continue."
+                  : "Try a different owner or repository name."}
               </p>
             </div>
           )}
@@ -158,13 +160,12 @@ export default function RepositoryPickerModal({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface-subtle px-5 py-4">
           <p className="text-xs text-muted">
-            {selectedRepositoryIds.length} selected
+            {repositories.length} authorized{" "}
+            {repositories.length === 1 ? "repository" : "repositories"}
           </p>
           {installations[0] ? (
             <a
               href={installations[0].manageUrl}
-              target="_blank"
-              rel="noreferrer"
               className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
             >
               <Settings className="size-3.5" aria-hidden="true" />

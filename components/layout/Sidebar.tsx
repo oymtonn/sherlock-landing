@@ -11,19 +11,26 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import UserMenu from "@/features/auth/UserMenu";
+import RepositoryPickerModal from "@/features/repositories/components/RepositoryPickerModal";
 import {
   getConnectedRepositories,
   getGitHubInstallUrl,
 } from "@/features/repositories/github-service";
 import {
   beginGitHubInstallation,
+  authorizedRepositoryId,
   getAddRepositoryAction,
   getGitHubCallbackNotice,
+  getSidebarRepositories,
   INITIAL_REPOSITORY_LOAD_STATE,
   removeGitHubCallbackParams,
+  repositoryIdFromDashboardPath,
+  SIDEBAR_REPOSITORY_LIMIT,
   type RepositoryLoadState,
 } from "@/features/repositories/github-state";
 
+const LAST_SELECTED_REPOSITORY_ID_KEY =
+  "sherlock:last-selected-repository-id";
 type Notice = NonNullable<ReturnType<typeof getGitHubCallbackNotice>>;
 
 export default function Sidebar() {
@@ -35,6 +42,10 @@ export default function Sidebar() {
   const [repositoryState, setRepositoryState] = useState<RepositoryLoadState>(
     INITIAL_REPOSITORY_LOAD_STATE,
   );
+  const [selectedRepositoryId, setSelectedRepositoryId] = useState<
+    string | null
+  >(null);
+  const [isRepositoryPickerOpen, setIsRepositoryPickerOpen] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const showRepositories = repositoriesOpen;
@@ -118,6 +129,30 @@ export default function Sidebar() {
     };
   }, [loadRepositories, router]);
 
+  useEffect(() => {
+    if (repositoryState.status !== "ready") return;
+
+    const routeRepositoryId = repositoryIdFromDashboardPath(pathname);
+    const storedRepositoryId = readLastSelectedRepositoryId();
+    const nextRepositoryId =
+      authorizedRepositoryId(repositoryState.repositories, routeRepositoryId) ??
+      authorizedRepositoryId(
+        repositoryState.repositories,
+        selectedRepositoryId,
+      ) ??
+      authorizedRepositoryId(repositoryState.repositories, storedRepositoryId);
+
+    setSelectedRepositoryId(nextRepositoryId);
+    if (nextRepositoryId) {
+      window.localStorage.setItem(
+        LAST_SELECTED_REPOSITORY_ID_KEY,
+        nextRepositoryId,
+      );
+    } else {
+      window.localStorage.removeItem(LAST_SELECTED_REPOSITORY_ID_KEY);
+    }
+  }, [pathname, repositoryState, selectedRepositoryId]);
+
   async function handleInstall() {
     setNotice(null);
     setIsInstalling(true);
@@ -144,20 +179,52 @@ export default function Sidebar() {
     if (action === "install") {
       void handleInstall();
     } else if (action === "browse") {
-      const manageUrl =
-        repositoryState.status === "ready"
-          ? repositoryState.installations[0]?.manageUrl
-          : undefined;
-      if (manageUrl) {
-        window.location.assign(manageUrl);
-      }
+      setIsRepositoryPickerOpen(true);
     } else if (repositoryState.status === "error") {
       void loadRepositories();
     }
   }
 
+  function handleSelectRepository(repositoryId: string) {
+    if (
+      repositoryState.status !== "ready" ||
+      !authorizedRepositoryId(repositoryState.repositories, repositoryId)
+    ) {
+      return;
+    }
+
+    setSelectedRepositoryId(repositoryId);
+    window.localStorage.setItem(LAST_SELECTED_REPOSITORY_ID_KEY, repositoryId);
+    setIsRepositoryPickerOpen(false);
+    router.push(`/dashboard/${repositoryId}`);
+  }
+
   const repositories =
     repositoryState.status === "ready" ? repositoryState.repositories : [];
+  const installations =
+    repositoryState.status === "ready" ? repositoryState.installations : [];
+  const visibleRepositories = getSidebarRepositories(
+    repositories,
+    selectedRepositoryId,
+  );
+  const hasRepositoryOverflow =
+    repositories.length > SIDEBAR_REPOSITORY_LIMIT;
+  const manageInstallation =
+    installations.find((installation) =>
+      repositories.some(
+        (repository) =>
+          repository.id === selectedRepositoryId &&
+          repository.installationId === installation.id,
+      ),
+    ) ?? installations[0];
+  const pickerInstallations = manageInstallation
+    ? [
+        manageInstallation,
+        ...installations.filter(
+          (installation) => installation.id !== manageInstallation.id,
+        ),
+      ]
+    : installations;
 
   const toggleRepositories = () => {
     if (!isOpen) {
@@ -281,7 +348,7 @@ export default function Sidebar() {
                   aria-hidden="true"
                   className="absolute bottom-5 left-0 top-1 w-px bg-border"
                 />
-                {repositories.map((repository) => {
+                {visibleRepositories.map((repository) => {
                   const href = `/dashboard/${repository.id}`;
                   // trailingSlash is on, so the live pathname ends with "/".
                   const isActive =
@@ -301,22 +368,65 @@ export default function Sidebar() {
                     </Link>
                   );
                 })}
-                <button
-                  type="button"
-                  onClick={handleAddRepository}
-                  disabled={
-                    isInstalling || repositoryState.status === "loading"
-                  }
-                  className="relative mt-1 flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-xs font-medium text-muted transition-colors duration-200 before:absolute before:-left-4 before:top-1/2 before:h-px before:w-3 before:bg-border hover:bg-surface hover:text-foreground disabled:cursor-wait disabled:opacity-60"
-                >
-                  {isInstalling ? "Opening GitHub..." : "Add repository"}
-                </button>
+                {repositoryState.status === "ready" &&
+                repositories.length === 0 ? (
+                  <p className="px-2 py-2 text-xs text-muted">
+                    Sherlock currently has no repository access.
+                  </p>
+                ) : null}
+                {hasRepositoryOverflow ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsRepositoryPickerOpen(true)}
+                    className="relative mt-1 flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-xs font-medium text-muted transition-colors duration-200 before:absolute before:-left-4 before:top-1/2 before:h-px before:w-3 before:bg-border hover:bg-surface hover:text-foreground"
+                  >
+                    Browse repositories
+                  </button>
+                ) : manageInstallation ? (
+                  <a
+                    href={manageInstallation.manageUrl}
+                    className="relative mt-1 flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-xs font-medium text-muted transition-colors duration-200 before:absolute before:-left-4 before:top-1/2 before:h-px before:w-3 before:bg-border hover:bg-surface hover:text-foreground"
+                  >
+                    Manage GitHub access
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddRepository}
+                    disabled={
+                      isInstalling || repositoryState.status === "loading"
+                    }
+                    className="relative mt-1 flex h-8 w-full items-center gap-2 rounded-sm px-2 text-left text-xs font-medium text-muted transition-colors duration-200 before:absolute before:-left-4 before:top-1/2 before:h-px before:w-3 before:bg-border hover:bg-surface hover:text-foreground disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {isInstalling
+                      ? "Opening GitHub..."
+                      : repositoryState.status === "error"
+                        ? "Retry repositories"
+                        : "Connect GitHub"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </nav>
       </aside>
 
+      {isRepositoryPickerOpen && repositoryState.status === "ready" ? (
+        <RepositoryPickerModal
+          repositories={repositories}
+          installations={pickerInstallations}
+          selectedRepositoryId={selectedRepositoryId}
+          onSelectRepository={handleSelectRepository}
+          onClose={() => setIsRepositoryPickerOpen(false)}
+        />
+      ) : null}
     </>
   );
+}
+
+function readLastSelectedRepositoryId() {
+  const repositoryId = window.localStorage.getItem(
+    LAST_SELECTED_REPOSITORY_ID_KEY,
+  );
+  return repositoryId && /^[0-9]+$/.test(repositoryId) ? repositoryId : null;
 }

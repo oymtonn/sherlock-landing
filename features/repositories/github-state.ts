@@ -12,6 +12,8 @@ export const INITIAL_REPOSITORY_LOAD_STATE: RepositoryLoadState = {
   status: "loading",
 };
 
+export const SIDEBAR_REPOSITORY_LIMIT = 6;
+
 export function getRepositoryContentKind(state: RepositoryLoadState) {
   if (state.status !== "ready") return state.status;
   return state.repositories.length === 0 ? "empty" : "repositories";
@@ -42,6 +44,45 @@ export function filterRepositories(
   return repositories.filter((repository) =>
     repository.fullName.toLocaleLowerCase().includes(normalizedQuery),
   );
+}
+
+export function repositoryIdFromDashboardPath(pathname: string) {
+  const match = pathname.match(/^\/dashboard\/([0-9]+)\/?$/);
+  return match?.[1] ?? null;
+}
+
+export function authorizedRepositoryId(
+  repositories: ConnectedRepository[],
+  repositoryId: string | null | undefined,
+) {
+  return repositoryId &&
+    repositories.some((repository) => repository.id === repositoryId)
+    ? repositoryId
+    : null;
+}
+
+export function getSidebarRepositories(
+  repositories: ConnectedRepository[],
+  selectedRepositoryId: string | null,
+  limit = SIDEBAR_REPOSITORY_LIMIT,
+) {
+  if (limit <= 0) return [];
+
+  const selectedId = authorizedRepositoryId(
+    repositories,
+    selectedRepositoryId,
+  );
+  if (!selectedId) return repositories.slice(0, limit);
+
+  const selected = repositories.find(
+    (repository) => repository.id === selectedId,
+  );
+  if (!selected) return repositories.slice(0, limit);
+
+  return [
+    selected,
+    ...repositories.filter((repository) => repository.id !== selectedId),
+  ].slice(0, limit);
 }
 
 export function getGitHubCallbackNotice(

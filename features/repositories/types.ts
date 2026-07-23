@@ -1,14 +1,14 @@
 export type ConnectedRepository = {
-  id: number;
+  id: string;
   fullName: string;
   htmlUrl: string;
   private: boolean;
   ownerAvatarUrl: string | null;
-  installationId: number;
+  installationId: string;
 };
 
 export type GitHubInstallation = {
-  id: number;
+  id: string;
   accountLogin: string;
   accountType: string;
   manageUrl: string;
@@ -22,10 +22,10 @@ export type ConnectedRepositoriesResponse = {
 export type GitHubIssueState = "open" | "closed" | "all";
 
 export type ConnectedGitHubIssue = {
-  id: number;
+  id: string;
   number: number;
   title: string;
-  body: string;
+  body: string | null;
   state: "open" | "closed";
   htmlUrl: string;
   author: { login: string; avatarUrl: string | null } | null;

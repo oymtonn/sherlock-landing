@@ -34,7 +34,7 @@ const ISSUE_STATES: Array<{ value: GitHubIssueState; label: string }> = [
 export default function RepositoryIssuesWorkspace({
   repositoryId,
 }: {
-  repositoryId: number;
+  repositoryId: string;
 }) {
   const router = useRouter();
   const [issueState, setIssueState] = useState<GitHubIssueState>("open");

@@ -45,8 +45,8 @@ export function filterRepositories(
 }
 
 export function toggleSelectedRepositoryId(
-  selectedRepositoryIds: number[],
-  repositoryId: number,
+  selectedRepositoryIds: string[],
+  repositoryId: string,
 ) {
   return selectedRepositoryIds.includes(repositoryId)
     ? selectedRepositoryIds.filter((id) => id !== repositoryId)
@@ -55,7 +55,7 @@ export function toggleSelectedRepositoryId(
 
 export function getSelectedRepositories(
   repositories: ConnectedRepository[],
-  selectedRepositoryIds: number[],
+  selectedRepositoryIds: string[],
 ) {
   const selectedIds = new Set(selectedRepositoryIds);
   return repositories.filter((repository) => selectedIds.has(repository.id));
@@ -64,7 +64,7 @@ export function getSelectedRepositories(
 export function getGitHubCallbackNotice(
   github: string | undefined,
 ): { type: "success" | "error"; message: string } | null {
-  if (github === "installed") {
+  if (github === "installed" || github === "success") {
     return {
       type: "success",
       message: "GitHub access was updated successfully.",
@@ -84,6 +84,7 @@ export function getGitHubCallbackNotice(
 export function removeGitHubCallbackParams(urlValue: string) {
   const url = new URL(urlValue);
   url.searchParams.delete("github");
+  url.searchParams.delete("installation");
   url.searchParams.delete("code");
   return `${url.pathname}${url.search}${url.hash}`;
 }

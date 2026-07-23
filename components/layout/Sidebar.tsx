@@ -39,7 +39,7 @@ export default function Sidebar() {
   const [repositoryState, setRepositoryState] = useState<RepositoryLoadState>(
     INITIAL_REPOSITORY_LOAD_STATE,
   );
-  const [selectedRepositoryIds, setSelectedRepositoryIds] = useState<number[]>(
+  const [selectedRepositoryIds, setSelectedRepositoryIds] = useState<string[]>(
     [],
   );
   const [isRepositoryPickerOpen, setIsRepositoryPickerOpen] = useState(false);
@@ -73,9 +73,9 @@ export default function Sidebar() {
     async function initialize() {
       const loaded = await loadRepositories();
       setSelectedRepositoryIds(readSelectedRepositoryIds());
-      const githubCallback = new URL(window.location.href).searchParams.get(
-        "github",
-      );
+      const searchParams = new URL(window.location.href).searchParams;
+      const githubCallback =
+        searchParams.get("installation") ?? searchParams.get("github");
       const callbackNotice = getGitHubCallbackNotice(
         githubCallback || undefined,
       );
@@ -126,7 +126,7 @@ export default function Sidebar() {
     }
   }
 
-  function handleToggleRepository(repositoryId: number) {
+  function handleToggleRepository(repositoryId: string) {
     setSelectedRepositoryIds((currentIds) => {
       const nextIds = toggleSelectedRepositoryId(currentIds, repositoryId);
       window.localStorage.setItem(
@@ -325,9 +325,9 @@ function readSelectedRepositoryIds() {
 
     if (
       Array.isArray(storedIds) &&
-      storedIds.every((id) => Number.isSafeInteger(id))
+      storedIds.every((id) => typeof id === "string" && /^[0-9]+$/.test(id))
     ) {
-      return storedIds as number[];
+      return storedIds as string[];
     }
   } catch {
     window.localStorage.removeItem(SELECTED_REPOSITORY_IDS_KEY);

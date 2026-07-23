@@ -7,9 +7,9 @@ export default async function RepositoryPage({
   params: Promise<{ repoId: string }>;
 }) {
   const { repoId } = await params;
-  if (!/^[1-9]\d*$/.test(repoId) || !Number.isSafeInteger(Number(repoId))) {
+  if (!/^[1-9]\d*$/.test(repoId)) {
     notFound();
   }
 
-  return <RepositoryIssuesWorkspace repositoryId={Number(repoId)} />;
+  return <RepositoryIssuesWorkspace repositoryId={repoId} />;
 }

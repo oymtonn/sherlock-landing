@@ -14,8 +14,8 @@ export default function RepositoryPickerModal({
 }: {
   repositories: ConnectedRepository[];
   installations: GitHubInstallation[];
-  selectedRepositoryIds: number[];
-  onToggleRepository: (repositoryId: number) => void;
+  selectedRepositoryIds: string[];
+  onToggleRepository: (repositoryId: string) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState("");

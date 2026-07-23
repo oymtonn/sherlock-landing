@@ -1,10 +1,4 @@
 import { ApiClientError } from "./api";
-import {
-  MOCK_INSTALLATIONS,
-  MOCK_ISSUES,
-  MOCK_REPOSITORIES,
-} from "./mock-data";
-import { MOCK_ISSUE_INVESTIGATION_IDS } from "./mock-investigations";
 import type {
   ConnectedRepositoriesResponse,
   GitHubIssueState,
@@ -12,88 +6,99 @@ import type {
   RepositoryIssuesResponse,
 } from "./types";
 
-/* ------------------------------------------------------------------
-   MOCK SERVICE LAYER — UI-only phase.
-   Function names, signatures and response shapes match the real service
-   (backed by GET /github/repositories, GET /github/repositories/:id/issues,
-   POST /github/install, GET …/issues/:n/investigation on the Sherlock
-   backend). Data integration replaces only the bodies below; the artificial
-   latency exists so loading skeletons render.
-------------------------------------------------------------------- */
-
-const MOCK_LATENCY_MS = 450;
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+async function apiJson<T>(url: string, init?: RequestInit): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers: { Accept: "application/json", ...init?.headers },
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiClientError("Sherlock is temporarily unavailable.");
+  }
+  if (!response.ok) {
+    throw new ApiClientError(
+      response.status === 401
+        ? "Your session has expired. Sign in again."
+        : response.status === 404
+          ? "The requested GitHub resource is not available."
+          : "Unable to load GitHub data. Please try again.",
+      response.status,
+    );
+  }
+  return (await response.json()) as T;
 }
 
 export async function getConnectedRepositories(): Promise<ConnectedRepositoriesResponse> {
-  await delay(MOCK_LATENCY_MS);
+  const [repositoriesResponse, installationsResponse] = await Promise.all([
+    apiJson<{ repositories: ConnectedRepositoriesResponse["repositories"] }>(
+      "/api/repositories/",
+    ),
+    apiJson<{
+      installations: Array<{
+        installationId: string;
+        account: { login: string; type: string };
+        status: string;
+        manageUrl: string;
+      }>;
+    }>("/api/installations/"),
+  ]);
   return {
-    repositories: MOCK_REPOSITORIES,
-    installations: MOCK_INSTALLATIONS,
+    repositories: repositoriesResponse.repositories,
+    installations: installationsResponse.installations
+      .filter((installation) => installation.status === "active")
+      .map((installation) => ({
+        id: installation.installationId,
+        accountLogin: installation.account.login,
+        accountType: installation.account.type,
+        manageUrl: installation.manageUrl,
+      })),
   };
 }
 
-/* Real flow: POST /github/install returns a per-user installation URL.
-   Until then, the existing onboarding page owns GitHub App installation. */
 export async function getGitHubInstallUrl(): Promise<string> {
-  await delay(150);
-  return "/onboarding";
+  const result = await apiJson<{ url: string }>("/api/installations/start/", {
+    method: "POST",
+  });
+  const url = new URL(result.url);
+  if (
+    url.protocol !== "https:" ||
+    url.hostname !== "github.com" ||
+    !url.pathname.startsWith("/apps/") ||
+    !url.pathname.endsWith("/installations/new")
+  ) {
+    throw new ApiClientError("GitHub returned an invalid installation URL.");
+  }
+  return url.toString();
 }
 
 export async function getRepositoryIssues(
-  repositoryId: number,
+  repositoryId: string,
   options: {
     state?: GitHubIssueState;
     page?: number;
     perPage?: number;
   } = {},
 ): Promise<RepositoryIssuesResponse> {
-  await delay(MOCK_LATENCY_MS);
-
   const state = options.state || "open";
   const page = options.page || 1;
   const perPage = options.perPage || 30;
-
-  const allIssues = MOCK_ISSUES[repositoryId] ?? [];
-  const filtered =
-    state === "all"
-      ? allIssues
-      : allIssues.filter((issue) => issue.state === state);
-  const start = (page - 1) * perPage;
-
-  return {
-    issues: filtered.slice(start, start + perPage),
-    pagination: {
-      page,
-      perPage,
-      hasNextPage: start + perPage < filtered.length,
-    },
-  };
+  const query = new URLSearchParams({
+    state,
+    page: String(page),
+    perPage: String(perPage),
+  });
+  return apiJson<RepositoryIssuesResponse>(
+    `/api/repositories/${encodeURIComponent(repositoryId)}/issues/?${query}`,
+  );
 }
 
-/* Issues listed in MOCK_ISSUE_INVESTIGATION_IDS open their mock
-   investigation; the rest 404 and exercise the workspace's
-   "comment “investigate” on the issue first" notice. */
 export async function getIssueInvestigation(
-  repositoryId: number,
+  repositoryId: string,
   issueNumber: number,
 ): Promise<IssueInvestigationResponse> {
-  await delay(MOCK_LATENCY_MS);
-
-  const investigationId =
-    MOCK_ISSUE_INVESTIGATION_IDS[repositoryId]?.[issueNumber];
-  if (!investigationId) {
-    throw new ApiClientError(
-      `No investigation found for issue #${issueNumber} in repository ${repositoryId}.`,
-      404,
-    );
-  }
-
-  return {
-    investigationId,
-    status: "found",
-    statusUrl: `/investigations/${investigationId}`,
-  };
+  return apiJson<IssueInvestigationResponse>(
+    `/api/repositories/${encodeURIComponent(repositoryId)}/issues/${issueNumber}/investigation/`,
+  );
 }

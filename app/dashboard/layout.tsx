@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import Sidebar from "@/components/layout/Sidebar";
-import { requireDashboardUser } from "@/lib/auth/require-dashboard-user";
 
 export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -10,10 +9,6 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  // Server-side auth gate — middleware only refreshes cookies, so every
-  // protected surface re-validates here (same contract as the old dashboard).
-  await requireDashboardUser();
-
   return (
     <div className="flex min-h-screen bg-background text-foreground lg:bg-surface-subtle">
       <Sidebar />

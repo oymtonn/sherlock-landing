@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
+  getExactInvestigationDiff,
   getInvestigation,
   nextInvestigationPollDelay,
   shouldPollInvestigation,
@@ -56,7 +57,7 @@ afterEach(() => {
 });
 
 describe("investigation transport", () => {
-  test("maps backend data and hydrates an authorized exact diff", async () => {
+  test("maps backend data and hydrates an authorized exact diff independently", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.endsWith("/diff/")) {
@@ -81,8 +82,8 @@ describe("investigation transport", () => {
       status: "completed",
       version: 3,
       fix: {
-        diff: "diff --git a/a.ts b/a.ts\n",
-        diffTruncated: false,
+        diff: "preview",
+        diffTruncated: true,
       },
       evidence: {
         before: {
@@ -93,6 +94,10 @@ describe("investigation transport", () => {
           },
         },
       },
+    });
+    await expect(getExactInvestigationDiff(INVESTIGATION_ID)).resolves.toEqual({
+      diff: "diff --git a/a.ts b/a.ts\n",
+      diffTruncated: false,
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -107,7 +112,7 @@ describe("investigation transport", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      getInvestigation(INVESTIGATION_ID, undefined, {
+      getInvestigation(INVESTIGATION_ID, {
         etag: 'W/"investigation-4"',
       }),
     ).resolves.toEqual({

@@ -16,10 +16,14 @@ export default function ReplayPlayer({
   label,
   replay,
   autoPlaySignal = 0,
+  mediaRevision = 0,
+  onLoadError,
 }: {
   label: string;
   replay: ReplayEvidence;
   autoPlaySignal?: number;
+  mediaRevision?: number;
+  onLoadError?: () => void;
 }) {
   if (replay.status !== "available" || !replay.videoUrl) {
     return <ReplayStateBox label={label} replay={replay} />;
@@ -27,10 +31,11 @@ export default function ReplayPlayer({
 
   return (
     <ReplayVideo
-      key={replay.videoUrl}
+      key={`${replay.videoUrl}:${mediaRevision}`}
       videoUrl={replay.videoUrl}
       posterUrl={replay.posterUrl}
       autoPlaySignal={autoPlaySignal}
+      onLoadError={onLoadError}
     />
   );
 }
@@ -39,10 +44,12 @@ function ReplayVideo({
   videoUrl,
   posterUrl,
   autoPlaySignal,
+  onLoadError,
 }: {
   videoUrl: string;
   posterUrl: string | null;
   autoPlaySignal: number;
+  onLoadError?: () => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [playbackState, setPlaybackState] = useState<PlaybackState>("loading");
@@ -72,21 +79,35 @@ function ReplayVideo({
           playsInline
           preload="metadata"
           onLoadedMetadata={() => setPlaybackState("ready")}
-          onError={() => setPlaybackState("error")}
+          onError={() => {
+            setPlaybackState("error");
+            onLoadError?.();
+          }}
           className="h-full w-full object-contain"
         />
 
         {playbackState !== "ready" ? (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/80 px-4 text-center text-sm">
-            <p
-              className={
-                playbackState === "error" ? "text-red-200" : "text-muted"
-              }
-            >
-              {playbackState === "error"
-                ? "Playback failed. The replay file could not be loaded."
-                : "Loading replay..."}
-            </p>
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 px-4 text-center text-sm">
+            <div>
+              <p
+                className={
+                  playbackState === "error" ? "text-red-200" : "text-muted"
+                }
+              >
+                {playbackState === "error"
+                  ? "Playback failed. The replay URL may have expired."
+                  : "Loading replay..."}
+              </p>
+              {playbackState === "error" && onLoadError ? (
+                <button
+                  type="button"
+                  onClick={onLoadError}
+                  className="mt-3 font-semibold text-foreground underline underline-offset-2"
+                >
+                  Retry replay
+                </button>
+              ) : null}
+            </div>
           </div>
         ) : null}
       </div>

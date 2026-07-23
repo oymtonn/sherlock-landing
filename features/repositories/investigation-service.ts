@@ -1,31 +1,11 @@
 import { ApiClientError } from "./api";
-import { MOCK_PREVIEW_FIXTURES } from "./mock-investigations";
 import type {
   BotActionTimelineStep,
   Investigation,
   InvestigationStatus,
   PhaseEvidence,
-  ReplayPhase,
   ScreenshotEvidence,
 } from "./types";
-
-export type InvestigationPreviewState =
-  | "loading"
-  | "active"
-  | "completed"
-  | "failed"
-  | "not-found";
-
-export type InvestigationEvidenceVariant =
-  | "available"
-  | "pending"
-  | "unavailable"
-  | "error";
-
-export type InvestigationPreview = {
-  state: InvestigationPreviewState;
-  evidence?: InvestigationEvidenceVariant;
-};
 
 export type InvestigationFetchResult =
   | {
@@ -35,28 +15,10 @@ export type InvestigationFetchResult =
     }
   | { status: "not-modified"; etag: string | null };
 
-const MOCK_LATENCY_MS = 600;
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function getInvestigation(
   investigationId: string,
-  preview?: InvestigationPreview,
   options: { etag?: string | null; signal?: AbortSignal } = {},
 ): Promise<InvestigationFetchResult> {
-  if (preview) {
-    if (process.env.NODE_ENV === "production") {
-      throw new ApiClientError("Investigation not found.", 404);
-    }
-    return {
-      status: "modified",
-      investigation: await getPreviewInvestigation(preview),
-      etag: null,
-    };
-  }
-
   let response: Response;
   try {
     response = await fetch(
@@ -97,68 +59,9 @@ export async function getInvestigation(
   );
   return {
     status: "modified",
-    investigation: await hydrateExactDiff(investigation, options.signal),
+    investigation,
     etag: responseEtag,
   };
-}
-
-async function getPreviewInvestigation(
-  preview: InvestigationPreview,
-): Promise<Investigation> {
-  if (preview.state === "loading") {
-    // Hold the skeleton on screen forever.
-    return new Promise<Investigation>(() => {});
-  }
-
-  await delay(MOCK_LATENCY_MS);
-
-  if (preview.state === "not-found") {
-    throw new ApiClientError("No investigation found for this preview.", 404);
-  }
-
-  const fixture = MOCK_PREVIEW_FIXTURES[preview.state];
-
-  return preview.evidence && preview.evidence !== "available"
-    ? withEvidenceVariant(fixture, preview.evidence)
-    : fixture;
-}
-
-function withEvidenceVariant(
-  investigation: Investigation,
-  variant: Exclude<InvestigationEvidenceVariant, "available">,
-): Investigation {
-  const replayStatus = variant;
-  const screenshotStatus: ScreenshotEvidence["status"] =
-    variant === "error" ? "error" : variant;
-  const errorMessage =
-    variant === "error" ? "The evidence store returned an error." : null;
-
-  const phases: ReplayPhase[] = ["before", "after"];
-  const evidence = Object.fromEntries(
-    phases.map((phase) => {
-      const phaseEvidence = investigation.evidence[phase];
-
-      return [
-        phase,
-        {
-          replay: {
-            status: replayStatus,
-            videoUrl: null,
-            posterUrl: null,
-            error: errorMessage,
-          },
-          screenshots: phaseEvidence.screenshots.map((item) => ({
-            ...item,
-            status: screenshotStatus,
-            url: null,
-            error: errorMessage,
-          })),
-        } satisfies PhaseEvidence,
-      ];
-    }),
-  ) as Record<ReplayPhase, PhaseEvidence>;
-
-  return { ...investigation, evidence };
 }
 
 type BackendInvestigation = {
@@ -253,25 +156,35 @@ function mapInvestigation(payload: BackendInvestigation): Investigation {
   };
 }
 
-async function hydrateExactDiff(
-  investigation: Investigation,
-  signal?: AbortSignal,
-): Promise<Investigation> {
-  if (!investigation.fix?.diffTruncated) return investigation;
-
+export async function getExactInvestigationDiff(
+  investigationId: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<{ diff: string; diffTruncated: boolean }> {
   let response: Response;
   try {
     response = await fetch(
-      `/api/investigations/${encodeURIComponent(investigation.investigationId)}/diff/`,
-      { headers: { Accept: "application/json" }, cache: "no-store", signal },
+      `/api/investigations/${encodeURIComponent(investigationId)}/diff/`,
+      {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: options.signal,
+      },
     );
-  } catch {
-    return investigation;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw error;
+    }
+    throw new ApiClientError("Unable to load the exact diff.");
   }
   if (!response.ok) {
-    // The preview diff remains useful and explicitly reports truncation if
-    // the optional exact-diff request is unavailable.
-    return investigation;
+    throw new ApiClientError(
+      response.status === 401
+        ? "Your session has expired. Sign in again."
+        : response.status === 404
+          ? "Investigation diff not found."
+          : "Unable to load the exact diff.",
+      response.status,
+    );
   }
   const payload = (await response.json()) as {
     diff?: unknown;
@@ -281,16 +194,9 @@ async function hydrateExactDiff(
     typeof payload.diff !== "string" ||
     typeof payload.diffTruncated !== "boolean"
   ) {
-    return investigation;
+    throw new ApiClientError("Sherlock returned invalid diff data.");
   }
-  return {
-    ...investigation,
-    fix: {
-      ...investigation.fix,
-      diff: payload.diff,
-      diffTruncated: payload.diffTruncated,
-    },
-  };
+  return { diff: payload.diff, diffTruncated: payload.diffTruncated };
 }
 
 export function shouldPollInvestigation(status: InvestigationStatus) {

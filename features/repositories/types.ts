@@ -49,13 +49,8 @@ export type IssueInvestigationResponse = {
   statusUrl: string;
 };
 
-/* ------------------------------------------------------------------
-   Investigation view types — mock-phase shapes.
-   These describe what the investigation UI renders, not the backend
-   wire format. Data integration maps real responses onto them (or
-   reconciles them with the backend contract) inside
-   `investigation-service.ts`; the components only know these shapes.
-------------------------------------------------------------------- */
+/* Investigation view models. The transport maps the backend wire contract
+   into these nullable component-friendly shapes. */
 
 export type ReplayPhase = "before" | "after";
 

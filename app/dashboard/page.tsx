@@ -1,4 +1,8 @@
-export default function RepositoriesPage() {
+import { requireDashboardUser } from "@/lib/auth/require-dashboard-user";
+
+export default async function RepositoriesPage() {
+  await requireDashboardUser();
+
   return (
     <section className="flex min-h-[calc(100vh-1.75rem)] items-center justify-center">
       <div className="max-w-sm text-center">

@@ -17,13 +17,13 @@ import {
   XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiClientError } from "../api";
 import {
+  getExactInvestigationDiff,
   getInvestigation,
   nextInvestigationPollDelay,
   shouldPollInvestigation,
-  type InvestigationPreview,
 } from "../investigation-service";
 import type {
   BotActionTimelineStep,
@@ -39,50 +39,98 @@ import ReplayPlayer from "./ReplayPlayer";
 type PageState =
   | { status: "loading" }
   | { status: "not-found" }
-  | { status: "error"; message: string }
+  | { status: "error"; message: string; authExpired: boolean }
   | {
       status: "ready";
       investigation: Investigation;
       refreshError: string | null;
+      authExpired: boolean;
+      mediaRevision: number;
     };
+
+// Backend signed URLs live for one hour. Renew with ample margin for timer
+// throttling and slow requests, and always bypass the version ETag.
+export const SIGNED_MEDIA_REFRESH_INTERVAL_MS = 45 * 60 * 1_000;
+const MEDIA_REFRESH_RETRY_BASE_MS = 5_000;
+const MEDIA_REFRESH_RETRY_MAX_MS = 60_000;
+const EXACT_DIFF_RETRY_DELAYS_MS = [500, 1_500] as const;
+
+type DetailRequestKind = "initial" | "poll" | "media";
 
 export default function InvestigationDetail({
   investigationId,
-  preview,
 }: {
   investigationId: string;
-  preview?: InvestigationPreview;
 }) {
   const [state, setState] = useState<PageState>({ status: "loading" });
   const [activeReplayPhase, setActiveReplayPhase] =
     useState<ReplayPhase>("before");
-  const previewKey = preview
-    ? `${preview.state}:${preview.evidence ?? ""}`
-    : "";
+  const requestMediaRefreshRef = useRef<(() => void) | null>(null);
+  const requestMediaRefresh = useCallback(() => {
+    requestMediaRefreshRef.current?.();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let mediaTimer: ReturnType<typeof setTimeout> | null = null;
     let etag: string | null = null;
-    let currentStatus: InvestigationStatus | null = null;
+    let currentInvestigation: Investigation | null = null;
     let consecutiveFailures = 0;
+    let consecutiveMediaFailures = 0;
     let requestSequence = 0;
-    const abortController = new AbortController();
+    let activeRequest: {
+      id: number;
+      kind: DetailRequestKind;
+      controller: AbortController;
+    } | null = null;
+    let diffController: AbortController | null = null;
+    let authExpired = false;
+    let mediaRevision = 0;
+    let lastUrlRefreshAt = 0;
+    let hiddenAt =
+      document.visibilityState === "hidden" ? Date.now() : null;
 
     setState({ status: "loading" });
     setActiveReplayPhase("before");
 
-    function scheduleNext() {
+    function clearPollTimer() {
+      if (pollTimer) clearTimeout(pollTimer);
+      pollTimer = null;
+    }
+
+    function clearMediaTimer() {
+      if (mediaTimer) clearTimeout(mediaTimer);
+      mediaTimer = null;
+    }
+
+    function publishReady(
+      investigation: Investigation,
+      refreshError: string | null = null,
+      incrementMediaRevision = false,
+    ) {
+      if (incrementMediaRevision) mediaRevision += 1;
+      setState({
+        status: "ready",
+        investigation,
+        refreshError,
+        authExpired,
+        mediaRevision,
+      });
+    }
+
+    function schedulePoll() {
+      clearPollTimer();
       if (
         cancelled ||
-        preview ||
-        !currentStatus ||
-        !shouldPollInvestigation(currentStatus)
+        authExpired ||
+        !currentInvestigation ||
+        !shouldPollInvestigation(currentInvestigation.status)
       ) {
         return;
       }
-      timer = setTimeout(
-        () => void load(false),
+      pollTimer = setTimeout(
+        () => void load("poll"),
         nextInvestigationPollDelay(
           consecutiveFailures,
           document.visibilityState === "hidden",
@@ -90,92 +138,293 @@ export default function InvestigationDetail({
       );
     }
 
-    async function load(initial: boolean) {
-      const requestId = ++requestSequence;
-      try {
-        const result = await getInvestigation(investigationId, preview, {
-          etag,
-          signal: abortController.signal,
-        });
-        if (cancelled || requestId !== requestSequence) return;
+    function scheduleMediaRefresh(delayMs?: number) {
+      clearMediaTimer();
+      if (cancelled || authExpired || !currentInvestigation) return;
+      const remainingMs =
+        delayMs ??
+        Math.max(
+          0,
+          SIGNED_MEDIA_REFRESH_INTERVAL_MS -
+            Math.max(0, Date.now() - lastUrlRefreshAt),
+        );
+      mediaTimer = setTimeout(() => void load("media"), remainingMs);
+    }
 
-        etag = result.etag;
-        consecutiveFailures = 0;
+    function stopForExpiredAuth(initial: boolean) {
+      authExpired = true;
+      clearPollTimer();
+      clearMediaTimer();
+      diffController?.abort();
+      diffController = null;
+
+      if (initial || !currentInvestigation) {
+        setState({
+          status: "error",
+          message: "Your session has expired. Sign in again.",
+          authExpired: true,
+        });
+        return;
+      }
+
+      publishReady(
+        currentInvestigation,
+        "Your session has expired. Sign in again to resume live updates.",
+      );
+    }
+
+    async function waitForDiffRetry(
+      delayMs: number,
+      signal: AbortSignal,
+    ): Promise<void> {
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+      await new Promise<void>((resolve, reject) => {
+        const onAbort = () => {
+          clearTimeout(timer);
+          reject(new DOMException("Aborted", "AbortError"));
+        };
+        const timer = setTimeout(() => {
+          signal.removeEventListener("abort", onAbort);
+          resolve();
+        }, delayMs);
+        signal.addEventListener("abort", onAbort, { once: true });
+      });
+    }
+
+    function hydrateExactDiff(snapshot: Investigation) {
+      if (!snapshot.fix?.diffTruncated || authExpired) return;
+
+      diffController?.abort();
+      const controller = new AbortController();
+      diffController = controller;
+
+      void (async () => {
+        for (
+          let attempt = 0;
+          attempt <= EXACT_DIFF_RETRY_DELAYS_MS.length;
+          attempt += 1
+        ) {
+          try {
+            const exact = await getExactInvestigationDiff(
+              snapshot.investigationId,
+              { signal: controller.signal },
+            );
+            if (
+              cancelled ||
+              controller.signal.aborted ||
+              !currentInvestigation ||
+              currentInvestigation.version !== snapshot.version ||
+              !currentInvestigation.fix
+            ) {
+              return;
+            }
+            currentInvestigation = {
+              ...currentInvestigation,
+              fix: { ...currentInvestigation.fix, ...exact },
+            };
+            publishReady(currentInvestigation);
+            return;
+          } catch (error) {
+            if (
+              cancelled ||
+              controller.signal.aborted ||
+              (error instanceof Error && error.name === "AbortError")
+            ) {
+              return;
+            }
+            if (error instanceof ApiClientError && error.status === 401) {
+              stopForExpiredAuth(false);
+              return;
+            }
+            const delayMs = EXACT_DIFF_RETRY_DELAYS_MS[attempt];
+            if (delayMs === undefined) return;
+            try {
+              await waitForDiffRetry(delayMs, controller.signal);
+            } catch {
+              return;
+            }
+          }
+        }
+      })().finally(() => {
+        if (diffController === controller) diffController = null;
+      });
+    }
+
+    function acceptInvestigation(
+      incoming: Investigation,
+      responseEtag: string | null,
+      kind: DetailRequestKind,
+    ) {
+      if (
+        currentInvestigation &&
+        incoming.version < currentInvestigation.version
+      ) {
+        return false;
+      }
+
+      const previous = currentInvestigation;
+      if (
+        previous?.version === incoming.version &&
+        previous.fix &&
+        !previous.fix.diffTruncated &&
+        incoming.fix?.diffTruncated
+      ) {
+        incoming = {
+          ...incoming,
+          fix: {
+            ...incoming.fix,
+            diff: previous.fix.diff,
+            diffTruncated: false,
+          },
+        };
+      }
+
+      currentInvestigation = incoming;
+      etag = responseEtag;
+      consecutiveFailures = 0;
+      consecutiveMediaFailures = 0;
+      lastUrlRefreshAt = Date.now();
+      const mediaChanged =
+        kind === "media" ||
+        mediaUrlSignature(previous) !== mediaUrlSignature(incoming);
+      publishReady(incoming, null, mediaChanged);
+      hydrateExactDiff(incoming);
+      schedulePoll();
+      scheduleMediaRefresh();
+      return true;
+    }
+
+    async function load(kind: DetailRequestKind) {
+      if (cancelled || authExpired) return;
+
+      if (activeRequest) {
+        if (kind === "poll" || activeRequest.kind === "media") return;
+        // A required unconditional media renewal supersedes a conditional poll.
+        // Version monotonicity below still protects against a test adapter or
+        // transport that resolves after abort.
+        activeRequest.controller.abort();
+      }
+
+      const requestId = ++requestSequence;
+      const controller = new AbortController();
+      activeRequest = { id: requestId, kind, controller };
+
+      try {
+        const result = await getInvestigation(investigationId, {
+          // Media renewals must never receive a version-based 304.
+          etag: kind === "media" ? null : etag,
+          signal: controller.signal,
+        });
+        if (cancelled) return;
+
         if (result.status === "modified") {
-          currentStatus = result.investigation.status;
-          setState({
-            status: "ready",
-            investigation: result.investigation,
-            refreshError: null,
-          });
+          acceptInvestigation(result.investigation, result.etag, kind);
         } else {
+          consecutiveFailures = 0;
           setState((current) =>
             current.status === "ready"
               ? { ...current, refreshError: null }
               : current,
           );
+          schedulePoll();
+          scheduleMediaRefresh();
         }
-        scheduleNext();
       } catch (loadError) {
         if (
           cancelled ||
-          requestId !== requestSequence ||
+          controller.signal.aborted ||
           (loadError instanceof Error && loadError.name === "AbortError")
         ) {
           return;
         }
 
-        if (loadError instanceof ApiClientError && loadError.status === 404) {
+        if (loadError instanceof ApiClientError && loadError.status === 401) {
+          stopForExpiredAuth(kind === "initial");
+        } else if (
+          loadError instanceof ApiClientError &&
+          loadError.status === 404
+        ) {
           setState({ status: "not-found" });
-          currentStatus = null;
-        } else if (initial) {
+          currentInvestigation = null;
+          clearPollTimer();
+          clearMediaTimer();
+        } else if (kind === "initial") {
           setState({
             status: "error",
             message:
               loadError instanceof Error
                 ? loadError.message
                 : "Unable to load investigation",
+            authExpired: false,
           });
-          currentStatus = null;
+          currentInvestigation = null;
+        } else if (kind === "media") {
+          consecutiveMediaFailures += 1;
+          if (currentInvestigation) {
+            publishReady(
+              currentInvestigation,
+              "Media could not be refreshed. Retrying automatically.",
+            );
+            scheduleMediaRefresh(
+              Math.min(
+                MEDIA_REFRESH_RETRY_BASE_MS *
+                  2 ** Math.max(0, consecutiveMediaFailures - 1),
+                MEDIA_REFRESH_RETRY_MAX_MS,
+              ),
+            );
+          }
         } else {
           consecutiveFailures += 1;
-          setState((current) =>
-            current.status === "ready"
-              ? {
-                  ...current,
-                  refreshError:
-                    "Live updates are temporarily unavailable. Retrying automatically.",
-                }
-              : current,
-          );
-          scheduleNext();
+          if (currentInvestigation) {
+            publishReady(
+              currentInvestigation,
+              "Live updates are temporarily unavailable. Retrying automatically.",
+            );
+            schedulePoll();
+          }
         }
+      } finally {
+        if (activeRequest?.id === requestId) activeRequest = null;
       }
     }
 
-    function pollWhenVisible() {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") {
+        hiddenAt = Date.now();
+        return;
+      }
+
+      const now = Date.now();
+      const hiddenDuration = hiddenAt === null ? 0 : now - hiddenAt;
+      hiddenAt = null;
       if (
-        document.visibilityState === "visible" &&
-        currentStatus &&
-        shouldPollInvestigation(currentStatus)
+        currentInvestigation &&
+        (hiddenDuration >= SIGNED_MEDIA_REFRESH_INTERVAL_MS ||
+          now - lastUrlRefreshAt >= SIGNED_MEDIA_REFRESH_INTERVAL_MS)
       ) {
-        if (timer) clearTimeout(timer);
-        timer = null;
-        void load(false);
+        void load("media");
+      } else if (
+        currentInvestigation &&
+        shouldPollInvestigation(currentInvestigation.status)
+      ) {
+        clearPollTimer();
+        void load("poll");
       }
     }
 
-    document.addEventListener("visibilitychange", pollWhenVisible);
-    void load(true);
+    requestMediaRefreshRef.current = () => void load("media");
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    void load("initial");
     return () => {
       cancelled = true;
-      abortController.abort();
-      if (timer) clearTimeout(timer);
-      document.removeEventListener("visibilitychange", pollWhenVisible);
+      activeRequest?.controller.abort();
+      diffController?.abort();
+      clearPollTimer();
+      clearMediaTimer();
+      requestMediaRefreshRef.current = null;
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-    // `previewKey` stands in for the preview object's identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [investigationId, previewKey]);
+  }, [investigationId]);
 
   if (state.status === "loading") {
     return <InvestigationSkeleton />;
@@ -191,7 +440,14 @@ export default function InvestigationDetail({
   }
 
   if (state.status === "error") {
-    return <StatusShell title="Something went wrong" message={state.message} />;
+    return (
+      <StatusShell
+        title={state.authExpired ? "Session expired" : "Something went wrong"}
+        message={state.message}
+        actionHref={state.authExpired ? "/" : undefined}
+        actionLabel={state.authExpired ? "Sign in again" : undefined}
+      />
+    );
   }
 
   const { investigation } = state;
@@ -242,10 +498,18 @@ export default function InvestigationDetail({
 
         {state.refreshError ? (
           <div
-            role="status"
+            role={state.authExpired ? "alert" : "status"}
             className="mt-4 rounded-sm border border-amber-800/70 bg-amber-950/20 px-3 py-2 text-sm text-amber-100"
           >
             {state.refreshError}
+            {state.authExpired ? (
+              <a
+                href="/"
+                className="ml-2 font-semibold text-foreground underline underline-offset-2"
+              >
+                Sign in again
+              </a>
+            ) : null}
           </div>
         ) : null}
 
@@ -259,6 +523,8 @@ export default function InvestigationDetail({
               <ReplayPanel
                 activePhase={activeReplayPhase}
                 investigation={investigation}
+                mediaRevision={state.mediaRevision}
+                onMediaLoadError={requestMediaRefresh}
                 onPhaseChange={setActiveReplayPhase}
               />
             </Panel>
@@ -282,7 +548,11 @@ export default function InvestigationDetail({
               icon={<Camera className="h-4 w-4 text-blue-300" />}
               className="flex h-[480px] max-h-[70vh] min-h-[320px] flex-col"
             >
-              <EvidenceGallery items={evidenceItems} />
+              <EvidenceGallery
+                items={evidenceItems}
+                mediaRevision={state.mediaRevision}
+                onMediaLoadError={requestMediaRefresh}
+              />
             </Panel>
 
             <Panel
@@ -356,10 +626,14 @@ function InvestigationStatusBadge({
 function ReplayPanel({
   activePhase,
   investigation,
+  mediaRevision,
+  onMediaLoadError,
   onPhaseChange,
 }: {
   activePhase: ReplayPhase;
   investigation: Investigation;
+  mediaRevision: number;
+  onMediaLoadError: () => void;
   onPhaseChange: (phase: ReplayPhase) => void;
 }) {
   const [autoPlaySignal, setAutoPlaySignal] = useState(0);
@@ -391,6 +665,8 @@ function ReplayPanel({
         label={activePhase === "before" ? "Before replay" : "After replay"}
         replay={activeReplay}
         autoPlaySignal={autoPlaySignal}
+        mediaRevision={mediaRevision}
+        onLoadError={onMediaLoadError}
       />
     </div>
   );
@@ -439,7 +715,15 @@ function getEvidenceItems(investigation: Investigation): EvidenceItem[] {
   return items;
 }
 
-function EvidenceGallery({ items }: { items: EvidenceItem[] }) {
+function EvidenceGallery({
+  items,
+  mediaRevision,
+  onMediaLoadError,
+}: {
+  items: EvidenceItem[];
+  mediaRevision: number;
+  onMediaLoadError: () => void;
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (items.length === 0) {
@@ -491,7 +775,12 @@ function EvidenceGallery({ items }: { items: EvidenceItem[] }) {
       </div>
 
       <div className="hidden min-h-0 flex-1 lg:block">
-        <ScreenshotFrame item={activeItem} className="h-full min-h-56" />
+        <ScreenshotFrame
+          item={activeItem}
+          className="h-full min-h-56"
+          mediaRevision={mediaRevision}
+          onLoadError={onMediaLoadError}
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-2 lg:hidden">
@@ -506,7 +795,13 @@ function EvidenceGallery({ items }: { items: EvidenceItem[] }) {
                 : "border-border hover:border-muted"
             }`}
           >
-            <ScreenshotFrame item={item} className="aspect-[4/3]" compact />
+            <ScreenshotFrame
+              item={item}
+              className="aspect-[4/3]"
+              compact
+              mediaRevision={mediaRevision}
+              onLoadError={onMediaLoadError}
+            />
             <p className="truncate px-2 py-1 text-xs font-medium text-muted">
               {item.title}
             </p>
@@ -521,11 +816,21 @@ function ScreenshotFrame({
   item,
   className = "",
   compact = false,
+  mediaRevision,
+  onLoadError,
 }: {
   item: EvidenceItem;
   className?: string;
   compact?: boolean;
+  mediaRevision: number;
+  onLoadError: () => void;
 }) {
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setLoadFailed(false);
+  }, [item.url, mediaRevision]);
+
   return (
     <div
       className={`overflow-hidden rounded-sm border border-border bg-surface ${className}`}
@@ -535,13 +840,29 @@ function ScreenshotFrame({
           <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
           Loading screenshot...
         </div>
-      ) : item.status === "ready" && item.url ? (
+      ) : item.status === "ready" && item.url && !loadFailed ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          key={`${item.url}:${mediaRevision}`}
           src={item.url}
           alt={`${item.title} screenshot`}
           className="h-full w-full object-cover"
+          onError={() => {
+            setLoadFailed(true);
+            onLoadError();
+          }}
         />
+      ) : item.status === "ready" && item.url && loadFailed ? (
+        <div className="flex h-full min-h-24 flex-col items-center justify-center gap-2 px-3 text-center text-xs text-muted">
+          <span>Screenshot expired or could not be loaded.</span>
+          <button
+            type="button"
+            onClick={onLoadError}
+            className="font-semibold text-foreground underline underline-offset-2"
+          >
+            Retry screenshot
+          </button>
+        </div>
       ) : item.status === "unavailable" || item.status === "error" ? (
         <div className="flex h-full min-h-24 items-center justify-center px-3 text-center text-xs text-muted">
           {item.error || "Screenshot unavailable."}
@@ -770,7 +1091,17 @@ function getTimelineBadgeClasses(status: BotActionTimelineStepStatus) {
   return "border-border bg-background text-muted";
 }
 
-function StatusShell({ title, message }: { title: string; message?: string }) {
+function StatusShell({
+  title,
+  message,
+  actionHref,
+  actionLabel,
+}: {
+  title: string;
+  message?: string;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
   return (
     <section>
       <div className="flex min-h-8 items-center">
@@ -781,6 +1112,14 @@ function StatusShell({ title, message }: { title: string; message?: string }) {
       <div className="mt-6 rounded-sm border border-border bg-background px-4 py-4">
         <h2 className="text-lg font-semibold">{title}</h2>
         {message ? <p className="mt-2 text-sm text-muted">{message}</p> : null}
+        {actionHref && actionLabel ? (
+          <a
+            href={actionHref}
+            className="mt-4 inline-flex h-9 items-center rounded-sm border border-border px-3 text-sm font-semibold hover:bg-surface"
+          >
+            {actionLabel}
+          </a>
+        ) : null}
       </div>
     </section>
   );
@@ -955,4 +1294,17 @@ function formatStatus(value: string) {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function mediaUrlSignature(investigation: Investigation | null) {
+  if (!investigation) return "";
+  const urls: Array<string | null> = [];
+  for (const phase of ["before", "after"] as const) {
+    const evidence = investigation.evidence[phase];
+    urls.push(evidence.replay.videoUrl, evidence.replay.posterUrl);
+    for (const screenshot of evidence.screenshots) {
+      urls.push(screenshot.url);
+    }
+  }
+  return JSON.stringify(urls);
 }

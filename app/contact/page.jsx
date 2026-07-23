@@ -21,24 +21,24 @@ export default function Contact() {
         </div>
       </section>
 
-      <div className="wrap contact-grid">
+      <div className="wrap grid grid-cols-[minmax(0,5fr)_minmax(0,6fr)] gap-16 pb-[104px] max-[900px]:grid-cols-1">
         <Reveal>
           <div className="ledger">
-            <div className="ledger-row" style={{ gridTemplateColumns: "34px 1fr" }}>
+            <div className="ledger-row grid-cols-[34px_1fr]">
               <span className="l-key mono">30m</span>
               <span className="l-val">
                 Live demo on a repo like yours — or on your repo, if you
                 install the pilot App first.
               </span>
             </div>
-            <div className="ledger-row" style={{ gridTemplateColumns: "34px 1fr" }}>
+            <div className="ledger-row grid-cols-[34px_1fr]">
               <span className="l-key mono">0</span>
               <span className="l-val">
                 Code changes required to try it. Install the GitHub App,
                 comment on an issue, done.
               </span>
             </div>
-            <div className="ledger-row" style={{ gridTemplateColumns: "34px 1fr" }}>
+            <div className="ledger-row grid-cols-[34px_1fr]">
               <span className="l-key mono">14d</span>
               <span className="l-val">
                 Free pilot after the demo — 25 investigations on one
@@ -46,9 +46,9 @@ export default function Contact() {
               </span>
             </div>
           </div>
-          <p className="dim" style={{ marginTop: 24, fontSize: 14.5 }}>
+          <p className="dim mt-6 text-[14.5px]">
             Prefer email? Reach us at{" "}
-            <a href="mailto:team@sherlock.dev" style={{ color: "var(--brand)" }}>
+            <a href="mailto:team@sherlock.dev" className="text-[color:var(--brand)]">
               team@sherlock.dev
             </a>
             . Security questionnaires and DPA requests welcome.

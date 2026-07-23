@@ -132,7 +132,7 @@ export default function Security() {
               </tbody>
             </table>
           </Reveal>
-          <div style={{ marginTop: 48 }}>
+          <div className="mt-12">
             <Link href="/contact" className="btn btn-primary btn-lg">
               Request the security overview
             </Link>

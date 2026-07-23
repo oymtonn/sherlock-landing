@@ -17,11 +17,11 @@ const mono = JetBrains_Mono({
 
 export const metadata = {
   title: {
-    default: "Sherlock — GitHub bugs to verified pull requests",
+    default: "Sherlock — Once you’re live, stay live",
     template: "%s — Sherlock",
   },
   description:
-    "Sherlock reproduces GitHub issues, maps your repo, patches the bug, verifies the fix by replaying the reproduction, and opens a PR your team can review.",
+    "Sherlock finds and fixes bugs after launch so your website keeps running and your users keep moving.",
 };
 
 export default function RootLayout({ children }) {

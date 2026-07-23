@@ -3,13 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import Logo from "./Logo";
+import GitHubSignInButton from "./auth/GitHubSignInButton";
 
 const LINKS = [
   { href: "/product", label: "Product" },
   { href: "/security", label: "Security" },
   { href: "/pricing", label: "Pricing" },
   { href: "/docs", label: "Docs" },
+  { href: "/contact", label: "Book a demo" },
 ];
 
 export default function Nav() {
@@ -19,6 +22,15 @@ export default function Nav() {
   const isActive = (href) =>
     pathname === href || pathname === `${href}/` ? "active" : "";
 
+  // The dashboard and investigation pages are a self-contained app shell
+  // with their own sidebar chrome.
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/investigations")
+  ) {
+    return null;
+  }
+
   return (
     <header className="nav">
       <div className="wrap nav-inner">
@@ -26,20 +38,18 @@ export default function Nav() {
           <Logo />
           Sherlock
         </Link>
-        <nav className="nav-links">
+        <div className="nav-cta">
+          <nav className="nav-links">
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} className={isActive(l.href)}>
               {l.label}
             </Link>
           ))}
         </nav>
-        <div className="nav-cta">
-          <Link href="/docs" className="btn btn-ghost">
-            How it works
-          </Link>
-          <Link href="/contact" className="btn btn-primary">
-            Book a demo
-          </Link>
+          <span className="border-l h-8 inline-block"></span>
+
+          <GitHubSignInButton label="Log In" className="btn btn-ghost" />
+          <GitHubSignInButton label="Get Started" className="btn btn-primary" />
         </div>
         <button
           className="nav-toggle"
@@ -47,7 +57,7 @@ export default function Nav() {
           aria-expanded={open}
           aria-label="Toggle navigation"
         >
-          {open ? "Close" : "Menu"}
+          {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
         </button>
       </div>
       <div className={`nav-mobile ${open ? "open" : ""}`}>
@@ -56,9 +66,13 @@ export default function Nav() {
             {l.label}
           </Link>
         ))}
-        <Link href="/contact" onClick={() => setOpen(false)}>
-          Book a demo
-        </Link>
+        <div className="nav-mobile-auth">
+          <GitHubSignInButton
+            label="Sign in with GitHub"
+            className="btn btn-primary"
+            showIcon
+          />
+        </div>
       </div>
     </header>
   );

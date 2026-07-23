@@ -53,7 +53,7 @@ export default function Sidebar() {
     try {
       const response = await getConnectedRepositories();
       setRepositoryState({ status: "ready", ...response });
-      return true;
+      return response;
     } catch (error) {
       setRepositoryState({
         status: "error",
@@ -62,17 +62,17 @@ export default function Sidebar() {
             ? error.message
             : "Unable to load GitHub repositories.",
       });
-      return false;
+      return null;
     }
   }, []);
 
   useEffect(() => {
     if (callbackHandled.current) return;
     callbackHandled.current = true;
+    let cancelled = false;
+    const retryTimers = new Map<ReturnType<typeof setTimeout>, () => void>();
 
     async function initialize() {
-      const loaded = await loadRepositories();
-      setSelectedRepositoryIds(readSelectedRepositoryIds());
       const searchParams = new URL(window.location.href).searchParams;
       const githubCallback =
         searchParams.get("installation") ?? searchParams.get("github");
@@ -80,18 +80,51 @@ export default function Sidebar() {
         githubCallback || undefined,
       );
 
-      if (callbackNotice && (callbackNotice.type === "error" || loaded)) {
-        setNotice(callbackNotice);
-      }
-
       if (callbackNotice) {
+        setNotice(callbackNotice);
         router.replace(removeGitHubCallbackParams(window.location.href), {
           scroll: false,
         });
       }
+
+      let response = await loadRepositories();
+      if (cancelled) return;
+      setSelectedRepositoryIds(readSelectedRepositoryIds());
+
+      // The callback intentionally permits repository reconciliation to finish
+      // asynchronously after ownership is verified. Retry an initially empty
+      // projection briefly so webhook/reconciliation completion appears without
+      // requiring a full page reload.
+      if (
+        callbackNotice?.type === "success" &&
+        (response === null || response.repositories.length === 0)
+      ) {
+        for (const delayMs of [1_500, 4_000]) {
+          await new Promise<void>((resolve) => {
+            const timer = setTimeout(() => {
+              retryTimers.delete(timer);
+              resolve();
+            }, delayMs);
+            retryTimers.set(timer, resolve);
+          });
+          if (cancelled) return;
+          response = await loadRepositories();
+          if (cancelled || (response && response.repositories.length > 0)) {
+            return;
+          }
+        }
+      }
     }
 
     void initialize();
+    return () => {
+      cancelled = true;
+      for (const [timer, resolve] of retryTimers) {
+        clearTimeout(timer);
+        resolve();
+      }
+      retryTimers.clear();
+    };
   }, [loadRepositories, router]);
 
   async function handleInstall() {

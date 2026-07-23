@@ -1,5 +1,41 @@
 @import "tailwindcss";
 
+/* Dashboard theme tokens. The app-shell UI under /dashboard is written with
+   Tailwind utilities (bg-background, text-muted, border-border, …); these map
+   those names onto the Sherlock palette defined in :root below so both
+   surfaces stay in sync. Relationships mirror the source dashboard design:
+   surface-subtle (sidebar canvas) darkest, background (content pane) raised
+   above it, surface lightest (hover/panels). */
+@theme {
+  --color-background: var(--bg-raise);
+  --color-foreground: var(--ink);
+  --color-surface: var(--bg-panel);
+  --color-surface-subtle: var(--bg);
+  --color-muted: var(--ink-dim);
+  --color-border: var(--line);
+}
+
+/* Custom scrollbars for the investigation code-diff viewer (ported from the
+   source dashboard). Unlayered on purpose: `.diff-scroll-content` must win
+   over the overflow utility on the same element, exactly as it did there. */
+.diff-scroll-content,
+.native-scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.diff-scroll-content {
+  overflow: auto;
+}
+
+.diff-scroll-content::-webkit-scrollbar,
+.native-scrollbar-hidden::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
 /* All hand-authored styles live in the `components` layer so that Tailwind
    utilities (which sit in the later `utilities` layer) reliably win when we
    add them in the markup, while these rules still override Tailwind's base

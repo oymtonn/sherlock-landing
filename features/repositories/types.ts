@@ -79,6 +79,8 @@ export type BotActionTimelineStep = {
   label: string;
   status: BotActionTimelineStepStatus;
   message: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
 };
 
 export type ReplayAvailability =
@@ -132,6 +134,8 @@ export type Investigation = {
   issueTitle: string | null;
   status: InvestigationStatus;
   error: string | null;
+  updatedAt: string;
+  version: number;
   timeline: BotActionTimelineStep[];
   evidence: Record<ReplayPhase, PhaseEvidence>;
   fix: InvestigationFix | null;

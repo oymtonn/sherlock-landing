@@ -21,6 +21,8 @@ import { useEffect, useState } from "react";
 import { ApiClientError } from "../api";
 import {
   getInvestigation,
+  nextInvestigationPollDelay,
+  shouldPollInvestigation,
   type InvestigationPreview,
 } from "../investigation-service";
 import type {
@@ -38,7 +40,11 @@ type PageState =
   | { status: "loading" }
   | { status: "not-found" }
   | { status: "error"; message: string }
-  | { status: "ready"; investigation: Investigation };
+  | {
+      status: "ready";
+      investigation: Investigation;
+      refreshError: string | null;
+    };
 
 export default function InvestigationDetail({
   investigationId,
@@ -56,20 +62,73 @@ export default function InvestigationDetail({
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let etag: string | null = null;
+    let currentStatus: InvestigationStatus | null = null;
+    let consecutiveFailures = 0;
+    let requestSequence = 0;
+    const abortController = new AbortController();
+
     setState({ status: "loading" });
     setActiveReplayPhase("before");
 
-    async function load() {
+    function scheduleNext() {
+      if (
+        cancelled ||
+        preview ||
+        !currentStatus ||
+        !shouldPollInvestigation(currentStatus)
+      ) {
+        return;
+      }
+      timer = setTimeout(
+        () => void load(false),
+        nextInvestigationPollDelay(
+          consecutiveFailures,
+          document.visibilityState === "hidden",
+        ),
+      );
+    }
+
+    async function load(initial: boolean) {
+      const requestId = ++requestSequence;
       try {
-        const investigation = await getInvestigation(investigationId, preview);
-        if (cancelled) return;
-        setState({ status: "ready", investigation });
+        const result = await getInvestigation(investigationId, preview, {
+          etag,
+          signal: abortController.signal,
+        });
+        if (cancelled || requestId !== requestSequence) return;
+
+        etag = result.etag;
+        consecutiveFailures = 0;
+        if (result.status === "modified") {
+          currentStatus = result.investigation.status;
+          setState({
+            status: "ready",
+            investigation: result.investigation,
+            refreshError: null,
+          });
+        } else {
+          setState((current) =>
+            current.status === "ready"
+              ? { ...current, refreshError: null }
+              : current,
+          );
+        }
+        scheduleNext();
       } catch (loadError) {
-        if (cancelled) return;
+        if (
+          cancelled ||
+          requestId !== requestSequence ||
+          (loadError instanceof Error && loadError.name === "AbortError")
+        ) {
+          return;
+        }
 
         if (loadError instanceof ApiClientError && loadError.status === 404) {
           setState({ status: "not-found" });
-        } else {
+          currentStatus = null;
+        } else if (initial) {
           setState({
             status: "error",
             message:
@@ -77,13 +136,42 @@ export default function InvestigationDetail({
                 ? loadError.message
                 : "Unable to load investigation",
           });
+          currentStatus = null;
+        } else {
+          consecutiveFailures += 1;
+          setState((current) =>
+            current.status === "ready"
+              ? {
+                  ...current,
+                  refreshError:
+                    "Live updates are temporarily unavailable. Retrying automatically.",
+                }
+              : current,
+          );
+          scheduleNext();
         }
       }
     }
 
-    void load();
+    function pollWhenVisible() {
+      if (
+        document.visibilityState === "visible" &&
+        currentStatus &&
+        shouldPollInvestigation(currentStatus)
+      ) {
+        if (timer) clearTimeout(timer);
+        timer = null;
+        void load(false);
+      }
+    }
+
+    document.addEventListener("visibilitychange", pollWhenVisible);
+    void load(true);
     return () => {
       cancelled = true;
+      abortController.abort();
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", pollWhenVisible);
     };
     // `previewKey` stands in for the preview object's identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,6 +237,15 @@ export default function InvestigationDetail({
         {errors.length > 0 ? (
           <div className="mt-4 rounded-sm border border-red-900/70 bg-red-950/20 px-3 py-2 text-sm text-red-200">
             {errors[0]}
+          </div>
+        ) : null}
+
+        {state.refreshError ? (
+          <div
+            role="status"
+            className="mt-4 rounded-sm border border-amber-800/70 bg-amber-950/20 px-3 py-2 text-sm text-amber-100"
+          >
+            {state.refreshError}
           </div>
         ) : null}
 

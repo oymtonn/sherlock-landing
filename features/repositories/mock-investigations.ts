@@ -45,6 +45,8 @@ function buildTimeline(
     label: STAGE_LABELS[id],
     status: steps[id]?.status ?? "pending",
     message: steps[id]?.message ?? null,
+    startedAt: null,
+    finishedAt: null,
   }));
 }
 
@@ -151,6 +153,8 @@ const ACTIVE_INVESTIGATION: Investigation = {
   issueTitle: "TypeError: cart.items is undefined on /checkout",
   status: "active",
   error: null,
+  updatedAt: "2026-07-23T00:00:00.000Z",
+  version: 1,
   timeline: buildTimeline({
     open_preview: {
       status: "completed",
@@ -184,6 +188,8 @@ const COMPLETED_INVESTIGATION: Investigation = {
   issueTitle: "Session crash on login when auth cookie is stale",
   status: "completed",
   error: null,
+  updatedAt: "2026-07-23T00:10:00.000Z",
+  version: 8,
   timeline: buildTimeline({
     open_preview: { status: "completed" },
     reproduce: {
@@ -235,6 +241,8 @@ const FAILED_INVESTIGATION: Investigation = {
   status: "failed",
   error:
     "Investigation failed while applying the fix: the sandbox could not install dependencies (registry timeout after 3 attempts).",
+  updatedAt: "2026-07-23T00:05:00.000Z",
+  version: 5,
   timeline: buildTimeline({
     open_preview: { status: "completed" },
     reproduce: {

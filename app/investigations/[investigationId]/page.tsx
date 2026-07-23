@@ -27,7 +27,7 @@ function parsePreview(
   investigationId: string,
   searchParams: Record<string, string | string[] | undefined>,
 ): InvestigationPreview | undefined {
-  if (investigationId !== "mock") {
+  if (process.env.NODE_ENV === "production" || investigationId !== "mock") {
     return undefined;
   }
 

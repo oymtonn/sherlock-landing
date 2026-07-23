@@ -22,6 +22,15 @@ export default function Nav() {
   const isActive = (href) =>
     pathname === href || pathname === `${href}/` ? "active" : "";
 
+  // The dashboard and investigation pages are a self-contained app shell
+  // with their own sidebar chrome.
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/investigations")
+  ) {
+    return null;
+  }
+
   return (
     <header className="nav">
       <div className="wrap nav-inner">

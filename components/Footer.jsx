@@ -1,7 +1,21 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Logo from "./Logo";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  // The dashboard and investigation pages are a self-contained app shell
+  // without marketing chrome.
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/investigations")
+  ) {
+    return null;
+  }
+
   return (
     <footer className="border-t border-[color:var(--line-soft)] pt-14 pb-10 mt-auto text-[14px] text-[color:var(--ink-faint)]">
       <div className="wrap">
